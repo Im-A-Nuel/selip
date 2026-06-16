@@ -15,14 +15,43 @@ export interface GiftRepo {
 
 // ---- In-memory fallback (dev / no-DB) -------------------------------------
 
+// In Next dev (and across separate route bundles) module singletons are not
+// shared, so the store is parked on globalThis to survive bundle boundaries and
+// HMR within a single Node process. This is the dev/demo fallback only; real
+// deployments use Supabase, which is shared by definition.
+interface MemoryState {
+  store: Map<string, Gift>;
+  slugIndex: Map<string, string>;
+  seq: number;
+}
+
+const globalForMem = globalThis as unknown as {
+  __selipMemory?: MemoryState;
+};
+
+function memState(): MemoryState {
+  if (!globalForMem.__selipMemory) {
+    globalForMem.__selipMemory = {
+      store: new Map(),
+      slugIndex: new Map(),
+      seq: 0,
+    };
+  }
+  return globalForMem.__selipMemory;
+}
+
 class MemoryRepo implements GiftRepo {
-  private store = new Map<string, Gift>();
-  private slugIndex = new Map<string, string>();
-  private seq = 0;
+  private get store() {
+    return memState().store;
+  }
+  private get slugIndex() {
+    return memState().slugIndex;
+  }
 
   async create(input: CreateGiftInput, slug: string): Promise<Gift> {
-    this.seq += 1;
-    const id = `mem_${this.seq.toString(16).padStart(8, "0")}`;
+    const state = memState();
+    state.seq += 1;
+    const id = `mem_${state.seq.toString(16).padStart(8, "0")}`;
     const gift: Gift = {
       id,
       claim_slug: slug,
