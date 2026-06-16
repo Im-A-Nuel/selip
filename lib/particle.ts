@@ -38,6 +38,8 @@ export async function initUniversalAccount(ownerAddress: string) {
   const cfg = getUAConfig();
   if (!cfg) throw new Error("Konfigurasi Particle belum lengkap.");
 
+  // @ts-expect-error Particle SDK exports map does not resolve its .d.ts under
+  // bundler moduleResolution; the SDK is used dynamically and typed as any.
   const mod: any = await import("@particle-network/universal-account-sdk");
   const UniversalAccount = mod.UniversalAccount ?? mod.default;
   uaInstance = new UniversalAccount({

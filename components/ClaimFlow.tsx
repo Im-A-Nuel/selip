@@ -29,7 +29,7 @@ export function ClaimFlow({
   view: PublicView;
 }) {
   const [phase, setPhase] = useState<Phase>("closed");
-  const [dest, setDest] = useState(DEST_CHAINS[0].id);
+  const [dest, setDest] = useState<string>(DEST_CHAINS[0].id);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
