@@ -44,7 +44,7 @@ export function ClaimFlow({
         return; // browser redirects away
       }
       setPhase("opening");
-      setTimeout(() => setPhase("revealed"), 900);
+      setTimeout(() => setPhase("revealed"), 1100);
       setNote("Mode demo: login dilewati karena kunci belum diatur.");
     } catch (e) {
       setNote((e as Error).message);
@@ -112,15 +112,43 @@ export function ClaimFlow({
         <span>🎁</span> Ada kado untukmu
       </Badge>
       <div
-        className={phase === "opening" ? "animate-pulse" : "float-slow [--rot:-2deg]"}
+        className={`relative ${phase === "closed" ? "float-slow [--rot:-2deg]" : ""}`}
       >
-        <GiftCard
-          occasion={view.occasion}
-          amountDisplay={view.amount_display}
-          message={view.message}
-          theme={view.card_theme}
-          revealed={false}
-        />
+        <div className={phase === "opening" ? "shake-anticipate" : ""}>
+          <GiftCard
+            occasion={view.occasion}
+            amountDisplay={view.amount_display}
+            message={view.message}
+            theme={view.card_theme}
+            revealed={false}
+          />
+        </div>
+
+        {/* Wrap + ribbon overlay; lifts away when opening. */}
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-0 overflow-hidden rounded-4xl ${
+            phase === "opening" ? "unwrap-lift" : ""
+          }`}
+        >
+          <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px]" />
+          {/* vertical ribbon */}
+          <div
+            className={`absolute inset-y-0 left-1/2 w-7 -translate-x-1/2 bg-white/40 ${
+              phase === "opening" ? "ribbon-left" : ""
+            }`}
+          />
+          {/* horizontal ribbon */}
+          <div
+            className={`absolute inset-x-0 top-1/2 h-7 -translate-y-1/2 bg-white/40 ${
+              phase === "opening" ? "ribbon-right" : ""
+            }`}
+          />
+          {/* bow */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl">
+            🎀
+          </div>
+        </div>
       </div>
       <h1 className="max-w-xs text-[1.8rem] font-extrabold leading-tight text-ink">
         Seseorang menyelipkan hadiah

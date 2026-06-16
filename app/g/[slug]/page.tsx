@@ -1,9 +1,30 @@
 // Recipient claim page. Server-resolves the slug to public metadata, then hands
 // off to the client ClaimFlow for login + reveal. Copy avoids crypto jargon.
 
+import type { Metadata } from "next";
 import { getRepo } from "@/lib/db";
 import { toPublicView } from "@/lib/gifts";
+import { occasionById } from "@/lib/constants";
 import { ClaimFlow } from "@/components/ClaimFlow";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const gift = await getRepo().getBySlug(slug);
+  if (!gift) return { title: "Kado tidak ditemukan - Selip" };
+  const occasion = occasionById(gift.occasion);
+  const title = `Ada kado ${occasion.label} untukmu ${occasion.emoji}`;
+  const description = "Buka dengan Google. No wallet needed. - Selip";
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 export default async function ClaimPage({
   params,

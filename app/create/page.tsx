@@ -5,7 +5,8 @@ import { useMemo, useState } from "react";
 import { GiftCard } from "@/components/GiftCard";
 import { Stepper } from "@/components/Stepper";
 import { Confetti } from "@/components/Confetti";
-import { Badge, Chip, PillButton } from "@/components/ui";
+import { Badge, PillButton } from "@/components/ui";
+import { ShareButton } from "@/components/ShareButton";
 import {
   CARD_THEMES,
   OCCASIONS,
@@ -39,9 +40,14 @@ export default function CreatePage() {
   const [claimUrl, setClaimUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const amountDisplay = useMemo(
-    () => (draft.amount ? `Rp ${draft.amount}` : "Rp 0"),
+  // draft.amount holds raw digits; format with thousands separators for display.
+  const amountFormatted = useMemo(
+    () => (draft.amount ? Number(draft.amount).toLocaleString("id-ID") : ""),
     [draft.amount],
+  );
+  const amountDisplay = useMemo(
+    () => (draft.amount ? `Rp ${amountFormatted}` : "Rp 0"),
+    [draft.amount, amountFormatted],
   );
 
   function next() {
@@ -113,15 +119,22 @@ export default function CreatePage() {
         <p className="-mt-3 text-sm text-ink/60">
           Bagikan link ini. Penerima cukup buka dan login Google.
         </p>
-        <div className="glass flex w-full items-center gap-2 rounded-2xl p-2 pl-4">
-          <input
-            readOnly
-            value={claimUrl}
-            className="w-full bg-transparent text-sm text-ink/70 outline-none"
-          />
-          <PillButton onClick={copy} className="shrink-0 px-4 py-2.5 text-sm">
-            {copied ? "Tersalin ✓" : "Salin"}
-          </PillButton>
+        <div className="flex w-full flex-col gap-3">
+          <ShareButton url={claimUrl} />
+          <div className="glass flex w-full items-center gap-2 rounded-2xl p-2 pl-4">
+            <input
+              readOnly
+              value={claimUrl}
+              className="w-full bg-transparent text-sm text-ink/70 outline-none"
+            />
+            <PillButton
+              variant="light"
+              onClick={copy}
+              className="shrink-0 px-4 py-2.5 text-sm"
+            >
+              {copied ? "Tersalin ✓" : "Salin"}
+            </PillButton>
+          </div>
         </div>
         <Link href="/" className="text-sm font-semibold text-coral-600">
           Buat kado lain
@@ -179,11 +192,11 @@ export default function CreatePage() {
               <input
                 autoFocus
                 inputMode="numeric"
-                value={draft.amount}
+                value={amountFormatted}
                 onChange={(e) =>
                   setDraft({
                     ...draft,
-                    amount: e.target.value.replace(/[^0-9.]/g, ""),
+                    amount: e.target.value.replace(/\D/g, ""),
                   })
                 }
                 placeholder="250.000"

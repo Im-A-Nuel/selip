@@ -32,6 +32,23 @@ export function GiftCard({
         aria-hidden
         className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/20 blur-2xl"
       />
+      {/* occasion watermark pattern */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-6 -left-3 select-none text-[7rem] leading-none opacity-10"
+      >
+        {o.emoji}
+      </div>
+      {/* dotted texture */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.12]"
+        style={{
+          backgroundImage:
+            "radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1px)",
+          backgroundSize: "16px 16px",
+        }}
+      />
       {/* stamp corner */}
       <div className="absolute right-5 top-5 flex h-12 w-12 rotate-6 items-center justify-center rounded-2xl bg-white/20 text-2xl ring-1 ring-white/40 backdrop-blur">
         {o.emoji}

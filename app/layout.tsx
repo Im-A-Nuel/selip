@@ -10,7 +10,10 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Selip",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  ),
+  title: "Selip - Slip someone a gift",
   description: "Slip someone a gift. No wallet needed.",
 };
 

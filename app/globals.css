@@ -92,6 +92,55 @@ body {
   animation: reveal-pop 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Gift unwrap: the wrap/ribbon lifts up, tilts back, and fades away. */
+@keyframes unwrap-lift {
+  0% {
+    transform: translateY(0) rotateX(0deg) scale(1);
+    opacity: 1;
+  }
+  40% {
+    transform: translateY(-6%) rotateX(0deg) scale(1.02);
+  }
+  100% {
+    transform: translateY(-130%) rotateX(55deg) scale(0.9);
+    opacity: 0;
+  }
+}
+
+.unwrap-lift {
+  transform-origin: top center;
+  animation: unwrap-lift 0.95s cubic-bezier(0.5, 0, 0.2, 1) forwards;
+}
+
+/* Ribbon halves split apart as the wrap lifts. */
+@keyframes ribbon-left {
+  to {
+    transform: translateX(-160%) rotate(-12deg);
+    opacity: 0;
+  }
+}
+@keyframes ribbon-right {
+  to {
+    transform: translateX(160%) rotate(12deg);
+    opacity: 0;
+  }
+}
+.ribbon-left {
+  animation: ribbon-left 0.6s ease-in forwards;
+}
+.ribbon-right {
+  animation: ribbon-right 0.6s ease-in forwards;
+}
+
+@keyframes shake-anticipate {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-2.5deg); }
+  75% { transform: rotate(2.5deg); }
+}
+.shake-anticipate {
+  animation: shake-anticipate 0.35s ease-in-out 2;
+}
+
 @keyframes float-slow {
   0%, 100% {
     transform: translateY(0) rotate(var(--rot, 0deg));
