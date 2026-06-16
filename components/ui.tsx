@@ -5,7 +5,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 type PillVariant = "dark" | "light" | "ghost";
 
 const pillBase =
-  "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100";
+  "relative inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100";
 
 const pillVariants: Record<PillVariant, string> = {
   dark: "bg-ink text-white shadow-lg shadow-ink/25 hover:bg-black",
@@ -13,18 +13,43 @@ const pillVariants: Record<PillVariant, string> = {
   ghost: "bg-transparent text-ink/70 hover:text-ink",
 };
 
+export function Spinner({ className = "" }: { className?: string }) {
+  return (
+    <span
+      className={`inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent ${className}`}
+      aria-hidden
+    />
+  );
+}
+
 export function PillButton({
   variant = "dark",
+  loading = false,
   className = "",
   children,
+  disabled,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: PillVariant }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: PillVariant;
+  loading?: boolean;
+}) {
   return (
     <button
+      disabled={disabled || loading}
+      aria-busy={loading}
       className={`${pillBase} px-6 py-3.5 ${pillVariants[variant]} ${className}`}
       {...props}
     >
-      {children}
+      <span
+        className={`inline-flex items-center gap-2 ${loading ? "invisible" : ""}`}
+      >
+        {children}
+      </span>
+      {loading && (
+        <span className="absolute inset-0 flex items-center justify-center">
+          <Spinner />
+        </span>
+      )}
     </button>
   );
 }

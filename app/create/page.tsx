@@ -5,16 +5,19 @@ import { useMemo, useState } from "react";
 import { GiftCard } from "@/components/GiftCard";
 import { Stepper } from "@/components/Stepper";
 import { Confetti } from "@/components/Confetti";
-import { Badge, PillButton } from "@/components/ui";
+import { Badge, Chip, PillButton } from "@/components/ui";
 import { ShareButton } from "@/components/ShareButton";
+import { useToast } from "@/components/Toast";
 import {
   CARD_THEMES,
   CURRENCY,
   OCCASIONS,
   RULE_TYPES,
+  SOURCE_ASSETS,
   type CardThemeId,
   type OccasionId,
   type RuleTypeId,
+  type SourceAssetId,
 } from "@/lib/constants";
 
 interface Draft {
@@ -25,9 +28,11 @@ interface Draft {
   rule: RuleTypeId;
 }
 
-const STEPS = ["Occasion", "Amount", "Message", "Theme", "Rule", "Send"];
+const STEPS = ["Occasion", "Amount", "Message", "Theme", "Rule", "Fund"];
+const QUICK_AMOUNTS = [10, 25, 50, 100];
 
 export default function CreatePage() {
+  const toast = useToast();
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Draft>({
     occasion: "birthday",
@@ -36,12 +41,16 @@ export default function CreatePage() {
     theme: "sunrise",
     rule: "refund_if_unclaimed",
   });
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [claimUrl, setClaimUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // draft.amount holds raw digits; format with thousands separators for display.
+  // Funding (demo) state
+  const [connected, setConnected] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const [source, setSource] = useState<SourceAssetId | null>(null);
+  const [funding, setFunding] = useState(false);
+
   const amountFormatted = useMemo(
     () =>
       draft.amount ? Number(draft.amount).toLocaleString(CURRENCY.locale) : "",
@@ -67,12 +76,34 @@ export default function CreatePage() {
     setError(null);
     setStep((s) => Math.max(s - 1, 0));
   }
+  function goto(target: number) {
+    // Only allow jumping to a step already reached.
+    if (target <= step) {
+      setError(null);
+      setStep(target);
+    }
+  }
 
-  async function submit() {
-    setSubmitting(true);
+  function connect() {
+    setConnecting(true);
+    // Demo: simulate connecting the sender's account. Real path uses the
+    // Universal Accounts / wallet SDK.
+    setTimeout(() => {
+      setConnecting(false);
+      setConnected(true);
+      toast("Account connected");
+    }, 800);
+  }
+
+  async function fund() {
+    if (!source) {
+      setError("Pick an asset to fund from.");
+      return;
+    }
+    setFunding(true);
     setError(null);
     try {
-      const res = await fetch("/api/gifts", {
+      const createRes = await fetch("/api/gifts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -83,18 +114,37 @@ export default function CreatePage() {
           rule_type: draft.rule,
         }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data?.error?.message ?? "Could not create the gift.");
+      const created = await createRes.json();
+      if (!createRes.ok) {
+        setError(created?.error?.message ?? "Could not create the gift.");
         return;
       }
+
+      const asset = SOURCE_ASSETS.find((a) => a.id === source);
+      const fundRes = await fetch(`/api/gifts/${created.id}/fund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          source_chain: asset?.chain ?? "Base",
+          // Demo placeholders; real values come from the on-chain funding tx.
+          smart_account_addr: "0xDEMO000000000000000000000000000000000000",
+          funding_tx: "0xDEMOFUNDINGTX",
+        }),
+      });
+      const funded = await fundRes.json();
+      if (!fundRes.ok) {
+        setError(funded?.error?.message ?? "Funding failed.");
+        return;
+      }
+
       const base =
         typeof window !== "undefined" ? window.location.origin : "";
-      setClaimUrl(`${base}/g/${data.claim_slug}`);
+      setClaimUrl(`${base}/g/${created.claim_slug}`);
+      toast("Gift funded 🎁");
     } catch {
       setError("Network hiccup. Please try again.");
     } finally {
-      setSubmitting(false);
+      setFunding(false);
     }
   }
 
@@ -102,6 +152,7 @@ export default function CreatePage() {
     if (!claimUrl) return;
     navigator.clipboard?.writeText(claimUrl);
     setCopied(true);
+    toast("Link copied");
     setTimeout(() => setCopied(false), 1600);
   }
 
@@ -148,17 +199,29 @@ export default function CreatePage() {
     );
   }
 
+  const onFundStep = step === STEPS.length - 1;
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 pb-8 pt-10">
       <div className="mb-6 flex items-center gap-3">
-        <Link
-          href="/"
-          className="soft flex h-9 w-9 items-center justify-center rounded-full text-ink/60"
-          aria-label="Back to home"
-        >
-          ←
-        </Link>
-        <Stepper total={STEPS.length} current={step} />
+        {step === 0 ? (
+          <Link
+            href="/"
+            className="soft flex h-9 w-9 items-center justify-center rounded-full text-ink/60"
+            aria-label="Back to home"
+          >
+            ←
+          </Link>
+        ) : (
+          <button
+            onClick={back}
+            className="soft flex h-9 w-9 items-center justify-center rounded-full text-ink/60"
+            aria-label="Back"
+          >
+            ←
+          </button>
+        )}
+        <Stepper total={STEPS.length} current={step} onStep={goto} />
       </div>
 
       <div className="mb-6 flex justify-center">
@@ -210,6 +273,18 @@ export default function CreatePage() {
                 className="w-full bg-transparent px-3 text-2xl font-extrabold text-ink outline-none placeholder:text-ink/25"
               />
             </div>
+            <div className="flex flex-wrap gap-2">
+              {QUICK_AMOUNTS.map((a) => (
+                <Chip
+                  key={a}
+                  active={draft.amount === String(a)}
+                  onClick={() => setDraft({ ...draft, amount: String(a) })}
+                >
+                  {CURRENCY.symbol}
+                  {a}
+                </Chip>
+              ))}
+            </div>
           </Field>
         )}
 
@@ -223,7 +298,7 @@ export default function CreatePage() {
               rows={4}
               className="glass w-full resize-none rounded-2xl px-5 py-4 text-ink outline-none placeholder:text-ink/30"
             />
-            <p className="mt-2 text-right text-xs text-ink/40">
+            <p className="-mt-1 text-right text-xs text-ink/40">
               {draft.message.length}/280
             </p>
           </Field>
@@ -284,14 +359,73 @@ export default function CreatePage() {
           </Field>
         )}
 
-        {step === 5 && (
-          <Field label="Ready to send?">
-            <div className="glass flex flex-col gap-3 rounded-2xl p-5 text-sm">
-              <Row k="Occasion" v={OCCASIONS.find((o) => o.id === draft.occasion)?.label ?? ""} />
-              <Row k="Amount" v={amountDisplay} />
-              <Row k="Theme" v={CARD_THEMES.find((t) => t.id === draft.theme)?.label ?? ""} />
-              <Row k="Rule" v={RULE_TYPES.find((r) => r.id === draft.rule)?.label ?? ""} />
+        {onFundStep && (
+          <Field label="Fund the gift">
+            <div className="glass flex items-center justify-between rounded-2xl p-5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink/45">
+                  Gift total
+                </p>
+                <p className="text-2xl font-extrabold text-ink">
+                  {amountDisplay}
+                </p>
+              </div>
+              <span className="text-3xl">
+                {OCCASIONS.find((o) => o.id === draft.occasion)?.emoji}
+              </span>
             </div>
+
+            {!connected ? (
+              <div className="flex flex-col gap-3">
+                <p className="text-sm leading-relaxed text-ink/60">
+                  Fund from your crypto on any chain. We route and convert it for
+                  you, so the recipient never sees the complexity.
+                </p>
+                <PillButton onClick={connect} loading={connecting}>
+                  Connect account
+                </PillButton>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-ink/45">
+                  Fund from
+                </p>
+                <div className="flex flex-col gap-2">
+                  {SOURCE_ASSETS.map((a) => (
+                    <button
+                      key={a.id}
+                      onClick={() => setSource(a.id)}
+                      className={`flex items-center justify-between rounded-2xl px-4 py-3 text-left transition active:scale-[0.99] ${
+                        source === a.id
+                          ? "bg-ink text-white shadow-lg shadow-ink/20"
+                          : "glass text-ink/80"
+                      }`}
+                    >
+                      <span className="flex items-center gap-3">
+                        <span className="text-xl">{a.emoji}</span>
+                        <span className="text-sm font-bold">
+                          {a.token}
+                          <span
+                            className={`ml-2 font-medium ${
+                              source === a.id ? "text-white/70" : "text-ink/45"
+                            }`}
+                          >
+                            on {a.chain}
+                          </span>
+                        </span>
+                      </span>
+                      <span
+                        className={`text-sm font-semibold ${
+                          source === a.id ? "text-white/80" : "text-ink/50"
+                        }`}
+                      >
+                        {a.balance} {a.token}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </Field>
         )}
       </div>
@@ -308,13 +442,18 @@ export default function CreatePage() {
             Back
           </PillButton>
         )}
-        {step < STEPS.length - 1 ? (
+        {!onFundStep ? (
           <PillButton onClick={next} className="flex-1">
             Next <span aria-hidden>→</span>
           </PillButton>
         ) : (
-          <PillButton onClick={submit} disabled={submitting} className="flex-1">
-            {submitting ? "Creating..." : "Create gift 🎁"}
+          <PillButton
+            onClick={fund}
+            loading={funding}
+            disabled={!connected || !source}
+            className="flex-1"
+          >
+            Fund &amp; create 🎁
           </PillButton>
         )}
       </div>
@@ -351,14 +490,5 @@ function Tile({
     >
       {children}
     </button>
-  );
-}
-
-function Row({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="text-ink/50">{k}</span>
-      <span className="font-bold text-ink">{v}</span>
-    </div>
   );
 }

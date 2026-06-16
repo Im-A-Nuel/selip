@@ -12,11 +12,55 @@
   text-rendering: optimizeLegibility;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: var(--font-sans);
   color: var(--ink);
   background: #fdf7f3;
   min-height: 100dvh;
+  /* respect notch / home indicator on mobile */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+  overscroll-behavior-y: none;
+}
+
+/* Keyboard focus only: clean ring, never on mouse click. */
+:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px #fdf7f3,
+    0 0 0 4px rgba(249, 96, 61, 0.6);
+  border-radius: 0.75rem;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Shimmer skeleton: animated sheen instead of a flat pulse. */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background-image: linear-gradient(
+    100deg,
+    rgba(255, 255, 255, 0.4) 30%,
+    rgba(255, 255, 255, 0.85) 50%,
+    rgba(255, 255, 255, 0.4) 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
 /* Soft pastel mesh background, warm-dominant with a faint lilac lift. Lives

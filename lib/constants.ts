@@ -41,6 +41,18 @@ export const DEST_CHAINS = [
   { id: "polygon", label: "Polygon", chainId: 137 },
 ] as const;
 
+// Source assets the sender can fund from. The Universal Accounts SDK routes and
+// converts any of these into the gift escrow on Arbitrum. Balances here are
+// placeholders for the demo flow; real balances come from the SDK once wired.
+export const SOURCE_ASSETS = [
+  { id: "usdc-base", token: "USDC", chain: "Base", emoji: "🔵", balance: 320.5 },
+  { id: "eth-arb", token: "ETH", chain: "Arbitrum", emoji: "🟣", balance: 0.18 },
+  { id: "usdc-op", token: "USDC", chain: "Optimism", emoji: "🔴", balance: 75.0 },
+  { id: "usdc-poly", token: "USDC", chain: "Polygon", emoji: "🟪", balance: 210.0 },
+] as const;
+
+export type SourceAssetId = (typeof SOURCE_ASSETS)[number]["id"];
+
 export function isOccasion(v: string): v is OccasionId {
   return OCCASIONS.some((o) => o.id === v);
 }

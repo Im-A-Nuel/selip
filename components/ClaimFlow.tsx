@@ -9,6 +9,7 @@ import { useState } from "react";
 import { GiftCard } from "@/components/GiftCard";
 import { Confetti } from "@/components/Confetti";
 import { Badge, PillButton } from "@/components/ui";
+import { useToast } from "@/components/Toast";
 import { DEST_CHAINS } from "@/lib/constants";
 import { isMagicConfigured, loginWithGoogle } from "@/lib/magic";
 
@@ -29,6 +30,7 @@ export function ClaimFlow({
   giftId: string;
   view: PublicView;
 }) {
+  const toast = useToast();
   const [phase, setPhase] = useState<Phase>("closed");
   const [dest, setDest] = useState<string>(DEST_CHAINS[0].id);
   const [busy, setBusy] = useState(false);
@@ -94,14 +96,11 @@ export function ClaimFlow({
         <PillButton
           className="w-full py-4 text-base"
           onClick={() =>
-            setNote(
-              "Cross-chain cash-out runs once the SDK is wired (week 4).",
-            )
+            toast("Cross-chain cash-out runs once the SDK is wired (week 4)")
           }
         >
           Claim gift →
         </PillButton>
-        {note && <p className="text-xs text-ink/50">{note}</p>}
       </main>
     );
   }
@@ -158,15 +157,11 @@ export function ClaimFlow({
         install, no technical stuff to learn.
       </p>
       <PillButton
-        disabled={busy || phase === "opening"}
+        loading={busy || phase === "opening"}
         onClick={open}
         className="w-full py-4 text-base"
       >
-        {phase === "opening"
-          ? "Opening..."
-          : busy
-            ? "Connecting..."
-            : "Open gift with Google"}
+        Open gift with Google
       </PillButton>
       {note && <p className="text-xs text-ink/50">{note}</p>}
       <span className="hidden" data-gift-id={giftId} />

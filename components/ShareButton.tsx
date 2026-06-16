@@ -3,11 +3,11 @@
 // Share a claim link via the native share sheet when available, falling back
 // to clipboard copy. Used on the create-success screen.
 
-import { useState } from "react";
 import { PillButton } from "@/components/ui";
+import { useToast } from "@/components/Toast";
 
 export function ShareButton({ url }: { url: string }) {
-  const [copied, setCopied] = useState(false);
+  const toast = useToast();
 
   async function share() {
     const data = {
@@ -25,14 +25,12 @@ export function ShareButton({ url }: { url: string }) {
       }
     }
     navigator.clipboard?.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1600);
+    toast("Link copied");
   }
 
   return (
     <PillButton onClick={share} className="w-full py-4 text-base">
-      {copied ? "Link copied ✓" : "Share gift"}
-      <span aria-hidden>↗</span>
+      Share gift <span aria-hidden>↗</span>
     </PillButton>
   );
 }
