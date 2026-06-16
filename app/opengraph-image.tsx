@@ -26,7 +26,7 @@ export default function Image() {
         <div style={{ fontSize: 140 }}>🎁</div>
         <div style={{ fontSize: 96, fontWeight: 800, marginTop: 8 }}>Selip</div>
         <div style={{ fontSize: 40, opacity: 0.92, marginTop: 8 }}>
-          Kasih hadiah, semudah chat.
+          Give a gift, as easy as a text.
         </div>
         <div style={{ fontSize: 30, opacity: 0.85, marginTop: 24 }}>
           No wallet needed.

@@ -45,7 +45,7 @@ export function ClaimFlow({
       }
       setPhase("opening");
       setTimeout(() => setPhase("revealed"), 1100);
-      setNote("Mode demo: login dilewati karena kunci belum diatur.");
+      setNote("Demo mode: sign-in skipped because keys are not set yet.");
     } catch (e) {
       setNote((e as Error).message);
     } finally {
@@ -58,7 +58,7 @@ export function ClaimFlow({
       <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-6 px-6 py-10 text-center">
         <Confetti />
         <Badge>
-          <span>🎉</span> Hadiah terbuka
+          <span>🎉</span> Gift opened
         </Badge>
         <div className="reveal-pop">
           <GiftCard
@@ -69,11 +69,11 @@ export function ClaimFlow({
           />
         </div>
         <h1 className="text-2xl font-extrabold text-ink">
-          Hadiahnya buat kamu 💛
+          This gift is yours 💛
         </h1>
         <div className="glass w-full rounded-2xl p-4 text-left">
           <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-ink/50">
-            Mau diterima ke mana?
+            Where should it land?
           </label>
           <div className="grid grid-cols-2 gap-2">
             {DEST_CHAINS.map((c) => (
@@ -95,11 +95,11 @@ export function ClaimFlow({
           className="w-full py-4 text-base"
           onClick={() =>
             setNote(
-              "Pencairan lintas chain dijalankan saat SDK dihubungkan (minggu 4).",
+              "Cross-chain cash-out runs once the SDK is wired (week 4).",
             )
           }
         >
-          Terima hadiah →
+          Claim gift →
         </PillButton>
         {note && <p className="text-xs text-ink/50">{note}</p>}
       </main>
@@ -109,7 +109,7 @@ export function ClaimFlow({
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-6 px-6 py-10 text-center">
       <Badge>
-        <span>🎁</span> Ada kado untukmu
+        <span>🎁</span> A gift for you
       </Badge>
       <div
         className={`relative ${phase === "closed" ? "float-slow [--rot:-2deg]" : ""}`}
@@ -151,11 +151,11 @@ export function ClaimFlow({
         </div>
       </div>
       <h1 className="max-w-xs text-[1.8rem] font-extrabold leading-tight text-ink">
-        Seseorang menyelipkan hadiah
+        Someone slipped you a gift
       </h1>
       <p className="-mt-2 max-w-sm text-sm leading-relaxed text-ink/60">
-        Buka dengan akun Google kamu. Tidak perlu apa pun yang lain, tidak perlu
-        aplikasi, tidak perlu tahu soal teknisnya.
+        Open it with your Google account. Nothing else needed, no app to
+        install, no technical stuff to learn.
       </p>
       <PillButton
         disabled={busy || phase === "opening"}
@@ -163,10 +163,10 @@ export function ClaimFlow({
         className="w-full py-4 text-base"
       >
         {phase === "opening"
-          ? "Membuka..."
+          ? "Opening..."
           : busy
-            ? "Menghubungkan..."
-            : "Buka kado dengan Google"}
+            ? "Connecting..."
+            : "Open gift with Google"}
       </PillButton>
       {note && <p className="text-xs text-ink/50">{note}</p>}
       <span className="hidden" data-gift-id={giftId} />

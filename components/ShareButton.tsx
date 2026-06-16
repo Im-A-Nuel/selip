@@ -11,8 +11,8 @@ export function ShareButton({ url }: { url: string }) {
 
   async function share() {
     const data = {
-      title: "Ada kado untukmu",
-      text: "Aku menyelipkan hadiah buat kamu. Buka di sini:",
+      title: "A gift for you",
+      text: "I slipped you a gift. Open it here:",
       url,
     };
     // navigator.share is mobile-first; guard for desktop/unsupported.
@@ -31,7 +31,7 @@ export function ShareButton({ url }: { url: string }) {
 
   return (
     <PillButton onClick={share} className="w-full py-4 text-base">
-      {copied ? "Link tersalin ✓" : "Bagikan kado"}
+      {copied ? "Link copied ✓" : "Share gift"}
       <span aria-hidden>↗</span>
     </PillButton>
   );

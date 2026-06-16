@@ -9,6 +9,7 @@ import { Badge, PillButton } from "@/components/ui";
 import { ShareButton } from "@/components/ShareButton";
 import {
   CARD_THEMES,
+  CURRENCY,
   OCCASIONS,
   RULE_TYPES,
   type CardThemeId,
@@ -24,7 +25,7 @@ interface Draft {
   rule: RuleTypeId;
 }
 
-const STEPS = ["Okasi", "Nominal", "Pesan", "Tema", "Aturan", "Kirim"];
+const STEPS = ["Occasion", "Amount", "Message", "Theme", "Rule", "Send"];
 
 export default function CreatePage() {
   const [step, setStep] = useState(0);
@@ -42,18 +43,22 @@ export default function CreatePage() {
 
   // draft.amount holds raw digits; format with thousands separators for display.
   const amountFormatted = useMemo(
-    () => (draft.amount ? Number(draft.amount).toLocaleString("id-ID") : ""),
+    () =>
+      draft.amount ? Number(draft.amount).toLocaleString(CURRENCY.locale) : "",
     [draft.amount],
   );
   const amountDisplay = useMemo(
-    () => (draft.amount ? `Rp ${amountFormatted}` : "Rp 0"),
+    () =>
+      draft.amount
+        ? `${CURRENCY.symbol}${amountFormatted}`
+        : `${CURRENCY.symbol}0`,
     [draft.amount, amountFormatted],
   );
 
   function next() {
     setError(null);
     if (step === 1 && !draft.amount.trim()) {
-      setError("Isi nominal dulu.");
+      setError("Enter an amount first.");
       return;
     }
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
@@ -80,14 +85,14 @@ export default function CreatePage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data?.error?.message ?? "Gagal membuat kado.");
+        setError(data?.error?.message ?? "Could not create the gift.");
         return;
       }
       const base =
         typeof window !== "undefined" ? window.location.origin : "";
       setClaimUrl(`${base}/g/${data.claim_slug}`);
     } catch {
-      setError("Jaringan bermasalah. Coba lagi.");
+      setError("Network hiccup. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -105,7 +110,7 @@ export default function CreatePage() {
       <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-6 px-6 py-10 text-center">
         <Confetti />
         <Badge>
-          <span>🎉</span> Siap dibagikan
+          <span>🎉</span> Ready to share
         </Badge>
         <div className="reveal-pop">
           <GiftCard
@@ -115,9 +120,9 @@ export default function CreatePage() {
             theme={draft.theme}
           />
         </div>
-        <h2 className="text-2xl font-extrabold text-ink">Kado kamu jadi</h2>
+        <h2 className="text-2xl font-extrabold text-ink">Your gift is ready</h2>
         <p className="-mt-3 text-sm text-ink/60">
-          Bagikan link ini. Penerima cukup buka dan login Google.
+          Share this link. The recipient just opens it and signs in with Google.
         </p>
         <div className="flex w-full flex-col gap-3">
           <ShareButton url={claimUrl} />
@@ -132,12 +137,12 @@ export default function CreatePage() {
               onClick={copy}
               className="shrink-0 px-4 py-2.5 text-sm"
             >
-              {copied ? "Tersalin ✓" : "Salin"}
+              {copied ? "Copied ✓" : "Copy"}
             </PillButton>
           </div>
         </div>
         <Link href="/" className="text-sm font-semibold text-coral-600">
-          Buat kado lain
+          Create another gift
         </Link>
       </main>
     );
@@ -149,7 +154,7 @@ export default function CreatePage() {
         <Link
           href="/"
           className="soft flex h-9 w-9 items-center justify-center rounded-full text-ink/60"
-          aria-label="Kembali ke beranda"
+          aria-label="Back to home"
         >
           ←
         </Link>
@@ -169,7 +174,7 @@ export default function CreatePage() {
 
       <div key={step} className="rise-in flex-1">
         {step === 0 && (
-          <Field label="Untuk acara apa?">
+          <Field label="What's the occasion?">
             <div className="grid grid-cols-2 gap-3">
               {OCCASIONS.map((o) => (
                 <Tile
@@ -186,9 +191,11 @@ export default function CreatePage() {
         )}
 
         {step === 1 && (
-          <Field label="Berapa nominalnya?">
+          <Field label="How much?">
             <div className="glass flex items-center rounded-2xl px-5 py-4">
-              <span className="text-2xl font-extrabold text-ink/40">Rp</span>
+              <span className="text-2xl font-extrabold text-ink/40">
+                {CURRENCY.symbol}
+              </span>
               <input
                 autoFocus
                 inputMode="numeric"
@@ -199,7 +206,7 @@ export default function CreatePage() {
                     amount: e.target.value.replace(/\D/g, ""),
                   })
                 }
-                placeholder="250.000"
+                placeholder="50"
                 className="w-full bg-transparent px-3 text-2xl font-extrabold text-ink outline-none placeholder:text-ink/25"
               />
             </div>
@@ -207,12 +214,12 @@ export default function CreatePage() {
         )}
 
         {step === 2 && (
-          <Field label="Tulis pesan (opsional)">
+          <Field label="Add a message (optional)">
             <textarea
               maxLength={280}
               value={draft.message}
               onChange={(e) => setDraft({ ...draft, message: e.target.value })}
-              placeholder="Selamat ya, semoga harimu menyenangkan."
+              placeholder="Happy birthday! Hope your day is wonderful."
               rows={4}
               className="glass w-full resize-none rounded-2xl px-5 py-4 text-ink outline-none placeholder:text-ink/30"
             />
@@ -223,7 +230,7 @@ export default function CreatePage() {
         )}
 
         {step === 3 && (
-          <Field label="Pilih tema kartu">
+          <Field label="Pick a card theme">
             <div className="grid grid-cols-2 gap-3">
               {CARD_THEMES.map((t) => (
                 <Tile
@@ -245,7 +252,7 @@ export default function CreatePage() {
         )}
 
         {step === 4 && (
-          <Field label="Aturan kado">
+          <Field label="Gift rule">
             <div className="flex flex-col gap-2.5">
               {RULE_TYPES.map((r) => (
                 <button
@@ -271,19 +278,19 @@ export default function CreatePage() {
               ))}
             </div>
             <p className="mt-3 text-xs leading-relaxed text-ink/50">
-              Aturan dijamin oleh kode, bukan oleh kami. Kalau tidak dibuka,
-              kado kembali sendiri ke kamu.
+              The rule is enforced by code, not by us. If it is never opened, the
+              gift returns to you on its own.
             </p>
           </Field>
         )}
 
         {step === 5 && (
-          <Field label="Siap kirim?">
+          <Field label="Ready to send?">
             <div className="glass flex flex-col gap-3 rounded-2xl p-5 text-sm">
-              <Row k="Acara" v={OCCASIONS.find((o) => o.id === draft.occasion)?.label ?? ""} />
-              <Row k="Nominal" v={amountDisplay} />
-              <Row k="Tema" v={CARD_THEMES.find((t) => t.id === draft.theme)?.label ?? ""} />
-              <Row k="Aturan" v={RULE_TYPES.find((r) => r.id === draft.rule)?.label ?? ""} />
+              <Row k="Occasion" v={OCCASIONS.find((o) => o.id === draft.occasion)?.label ?? ""} />
+              <Row k="Amount" v={amountDisplay} />
+              <Row k="Theme" v={CARD_THEMES.find((t) => t.id === draft.theme)?.label ?? ""} />
+              <Row k="Rule" v={RULE_TYPES.find((r) => r.id === draft.rule)?.label ?? ""} />
             </div>
           </Field>
         )}
@@ -298,16 +305,16 @@ export default function CreatePage() {
       <div className="mt-6 flex gap-3">
         {step > 0 && (
           <PillButton variant="light" onClick={back} className="px-6">
-            Kembali
+            Back
           </PillButton>
         )}
         {step < STEPS.length - 1 ? (
           <PillButton onClick={next} className="flex-1">
-            Lanjut <span aria-hidden>→</span>
+            Next <span aria-hidden>→</span>
           </PillButton>
         ) : (
           <PillButton onClick={submit} disabled={submitting} className="flex-1">
-            {submitting ? "Membuat..." : "Buat kado 🎁"}
+            {submitting ? "Creating..." : "Create gift 🎁"}
           </PillButton>
         )}
       </div>

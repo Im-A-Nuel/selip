@@ -14,10 +14,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const gift = await getRepo().getBySlug(slug);
-  if (!gift) return { title: "Kado tidak ditemukan - Selip" };
+  if (!gift) return { title: "Gift not found - Selip" };
   const occasion = occasionById(gift.occasion);
-  const title = `Ada kado ${occasion.label} untukmu ${occasion.emoji}`;
-  const description = "Buka dengan Google. No wallet needed. - Selip";
+  const title = `A ${occasion.label} gift for you ${occasion.emoji}`;
+  const description = "Open it with Google. No wallet needed. - Selip";
   return {
     title,
     description,
@@ -38,11 +38,9 @@ export default async function ClaimPage({
     return (
       <Centered>
         <span className="text-4xl">🤔</span>
-        <h1 className="text-2xl font-extrabold text-ink">
-          Kado tidak ditemukan
-        </h1>
+        <h1 className="text-2xl font-extrabold text-ink">Gift not found</h1>
         <p className="text-sm text-ink/60">
-          Link mungkin salah ketik atau sudah tidak berlaku.
+          The link may be mistyped or no longer valid.
         </p>
       </Centered>
     );
@@ -53,9 +51,9 @@ export default async function ClaimPage({
       <Centered>
         <span className="text-4xl">🎉</span>
         <h1 className="text-2xl font-extrabold text-ink">
-          Kado ini sudah dibuka
+          This gift is already opened
         </h1>
-        <p className="text-sm text-ink/60">Sampai jumpa di kado berikutnya.</p>
+        <p className="text-sm text-ink/60">See you at the next one.</p>
       </Centered>
     );
   }
@@ -65,10 +63,10 @@ export default async function ClaimPage({
       <Centered>
         <span className="text-4xl">⌛</span>
         <h1 className="text-2xl font-extrabold text-ink">
-          Kado ini sudah kedaluwarsa
+          This gift has expired
         </h1>
         <p className="text-sm text-ink/60">
-          Kado kembali ke pengirim karena tidak dibuka tepat waktu.
+          It returned to the sender because it was not opened in time.
         </p>
       </Centered>
     );

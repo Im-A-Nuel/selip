@@ -69,19 +69,19 @@ export function validateCreateInput(
   input: Partial<CreateGiftInput>,
 ): ValidationResult {
   if (!input.occasion || !isOccasion(input.occasion)) {
-    return { ok: false, error: "Okasi tidak valid." };
+    return { ok: false, error: "Invalid occasion." };
   }
   if (!input.amount_display || input.amount_display.trim().length === 0) {
-    return { ok: false, error: "Nominal wajib diisi." };
+    return { ok: false, error: "Amount is required." };
   }
   if (!input.card_theme || !isCardTheme(input.card_theme)) {
-    return { ok: false, error: "Tema kartu tidak valid." };
+    return { ok: false, error: "Invalid card theme." };
   }
   if (!input.rule_type || !isRuleType(input.rule_type)) {
-    return { ok: false, error: "Jenis aturan tidak valid." };
+    return { ok: false, error: "Invalid rule type." };
   }
   if (input.message && input.message.length > 280) {
-    return { ok: false, error: "Pesan terlalu panjang (maks 280 karakter)." };
+    return { ok: false, error: "Message too long (max 280 characters)." };
   }
   return { ok: true };
 }

@@ -1,14 +1,19 @@
 // Shared enums and display metadata. Keep recipient-facing copy free of the
 // words wallet / seed phrase / gas / chain (CLAUDE.md convention).
+// Copy is English; ids stay stable so the DB enum constraints do not change.
 
 export const OCCASIONS = [
-  { id: "birthday", label: "Ulang tahun", emoji: "🎂" },
-  { id: "thr", label: "THR", emoji: "🧧" },
-  { id: "graduation", label: "Kelulusan", emoji: "🎓" },
-  { id: "wedding", label: "Pernikahan", emoji: "💍" },
+  { id: "birthday", label: "Birthday", emoji: "🎂" },
+  { id: "thr", label: "Holiday", emoji: "🧧" },
+  { id: "graduation", label: "Graduation", emoji: "🎓" },
+  { id: "wedding", label: "Wedding", emoji: "💍" },
 ] as const;
 
 export type OccasionId = (typeof OCCASIONS)[number]["id"];
+
+// Display currency. USD for the international audience; swap here later if a
+// locale switch is added.
+export const CURRENCY = { symbol: "$", code: "USD", locale: "en-US" } as const;
 
 export const CARD_THEMES = [
   { id: "sunrise", label: "Sunrise", from: "#ff7a5c", to: "#ffb020" },
@@ -20,9 +25,9 @@ export const CARD_THEMES = [
 export type CardThemeId = (typeof CARD_THEMES)[number]["id"];
 
 export const RULE_TYPES = [
-  { id: "refund_if_unclaimed", label: "Kembali otomatis jika tidak dibuka" },
-  { id: "unlock_on_date", label: "Buka pada tanggal tertentu" },
-  { id: "vested", label: "Cair bertahap" },
+  { id: "refund_if_unclaimed", label: "Auto-return if unopened" },
+  { id: "unlock_on_date", label: "Unlock on a date" },
+  { id: "vested", label: "Release gradually" },
 ] as const;
 
 export type RuleTypeId = (typeof RULE_TYPES)[number]["id"];

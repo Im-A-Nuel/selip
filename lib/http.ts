@@ -10,17 +10,16 @@ export function fail(code: string, message: string, status: number) {
   return NextResponse.json({ error: { code, message } }, { status });
 }
 
-// Recipient-facing error copy, in Indonesian, no crypto jargon.
+// User-facing error copy, in English, no crypto jargon.
 export const ERRORS = {
-  INVALID_INPUT: (m = "Input tidak valid.") =>
-    fail("INVALID_INPUT", m, 400),
-  UNAUTHORIZED: () => fail("UNAUTHORIZED", "Silakan login dulu.", 401),
-  NOT_FOUND: () => fail("GIFT_NOT_FOUND", "Kado tidak ditemukan.", 404),
+  INVALID_INPUT: (m = "Invalid input.") => fail("INVALID_INPUT", m, 400),
+  UNAUTHORIZED: () => fail("UNAUTHORIZED", "Please sign in first.", 401),
+  NOT_FOUND: () => fail("GIFT_NOT_FOUND", "Gift not found.", 404),
   ALREADY_FUNDED: () =>
-    fail("GIFT_ALREADY_FUNDED", "Kado ini sudah didanai.", 409),
+    fail("GIFT_ALREADY_FUNDED", "This gift is already funded.", 409),
   ALREADY_CLAIMED: () =>
-    fail("GIFT_ALREADY_CLAIMED", "Kado ini sudah dibuka.", 409),
+    fail("GIFT_ALREADY_CLAIMED", "This gift is already opened.", 409),
   GONE: () =>
-    fail("GIFT_GONE", "Kado ini sudah dibuka atau kedaluwarsa.", 410),
-  SERVER: (m = "Terjadi kesalahan.") => fail("SERVER_ERROR", m, 500),
+    fail("GIFT_GONE", "This gift is already opened or expired.", 410),
+  SERVER: (m = "Something went wrong.") => fail("SERVER_ERROR", m, 500),
 } as const;

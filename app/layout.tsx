@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={jakarta.variable}>
+    <html lang="en" className={jakarta.variable}>
       <body>
         <div className="aurora" aria-hidden />
         {children}

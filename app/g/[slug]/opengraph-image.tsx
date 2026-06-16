@@ -8,7 +8,7 @@ import { occasionById, themeById } from "@/lib/constants";
 export const runtime = "nodejs";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Ada kado untukmu di Selip";
+export const alt = "A gift for you on Selip";
 
 export default async function Image({
   params,
@@ -50,10 +50,10 @@ export default async function Image({
           {occasion.label}
         </div>
         <div style={{ fontSize: 76, fontWeight: 800, marginTop: 12 }}>
-          {claimable ? "Ada kado untukmu" : "Selip"}
+          {claimable ? "A gift for you" : "Selip"}
         </div>
         <div style={{ fontSize: 34, opacity: 0.9, marginTop: 12 }}>
-          Buka dengan Google. No wallet needed.
+          Open it with Google. No wallet needed.
         </div>
         <div
           style={{

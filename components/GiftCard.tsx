@@ -57,7 +57,7 @@ export function GiftCard({
       <span className="text-xs font-bold uppercase tracking-widest text-white/85">
         {o.label}
       </span>
-      <p className="mt-10 text-sm font-medium text-white/80">Untukmu</p>
+      <p className="mt-10 text-sm font-medium text-white/80">For you</p>
       <p className="mt-1 text-[2.6rem] font-extrabold leading-none tabular-nums drop-shadow-sm">
         {revealed ? amountDisplay : "• • •"}
       </p>
