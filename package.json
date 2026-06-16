@@ -9,6 +9,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "spike": "node --env-file=.env.local scripts/spike-crosschain.mjs",
     "test": "echo \"no tests yet\" && exit 0"
   },
   "dependencies": {
