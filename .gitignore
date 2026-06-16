@@ -56,3 +56,6 @@ yarn-error.log*
 
 # local npm config (registry mirror, machine-specific)
 .npmrc
+
+# internal AI agent instructions (kept local, not for public repo)
+CLAUDE.md
