@@ -28,9 +28,15 @@ const config: Config = {
           400: "#ffb020",
           500: "#f59e0b",
         },
+        ink: "#1c1410",
+        lilac: { 300: "#c4a5ff", 400: "#a987f5" },
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
+      },
+      borderRadius: {
+        "4xl": "2rem",
+        "5xl": "2.5rem",
       },
     },
   },

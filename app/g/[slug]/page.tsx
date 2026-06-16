@@ -17,10 +17,10 @@ export default async function ClaimPage({
     return (
       <Centered>
         <span className="text-4xl">🤔</span>
-        <h1 className="text-2xl font-bold text-coral-600">
+        <h1 className="text-2xl font-extrabold text-ink">
           Kado tidak ditemukan
         </h1>
-        <p className="text-sm text-coral-700/80">
+        <p className="text-sm text-ink/60">
           Link mungkin salah ketik atau sudah tidak berlaku.
         </p>
       </Centered>
@@ -31,10 +31,10 @@ export default async function ClaimPage({
     return (
       <Centered>
         <span className="text-4xl">🎉</span>
-        <h1 className="text-2xl font-bold text-coral-600">
+        <h1 className="text-2xl font-extrabold text-ink">
           Kado ini sudah dibuka
         </h1>
-        <p className="text-sm text-coral-700/80">Sampai jumpa di kado berikutnya.</p>
+        <p className="text-sm text-ink/60">Sampai jumpa di kado berikutnya.</p>
       </Centered>
     );
   }
@@ -43,10 +43,10 @@ export default async function ClaimPage({
     return (
       <Centered>
         <span className="text-4xl">⌛</span>
-        <h1 className="text-2xl font-bold text-coral-600">
+        <h1 className="text-2xl font-extrabold text-ink">
           Kado ini sudah kedaluwarsa
         </h1>
-        <p className="text-sm text-coral-700/80">
+        <p className="text-sm text-ink/60">
           Kado kembali ke pengirim karena tidak dibuka tepat waktu.
         </p>
       </Centered>

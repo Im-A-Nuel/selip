@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { GiftCard } from "@/components/GiftCard";
 import { Stepper } from "@/components/Stepper";
 import { Confetti } from "@/components/Confetti";
+import { Badge, Chip, PillButton } from "@/components/ui";
 import {
   CARD_THEMES,
   OCCASIONS,
@@ -35,6 +37,7 @@ export default function CreatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [claimUrl, setClaimUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const amountDisplay = useMemo(
     () => (draft.amount ? `Rp ${draft.amount}` : "Rp 0"),
@@ -84,10 +87,20 @@ export default function CreatePage() {
     }
   }
 
+  function copy() {
+    if (!claimUrl) return;
+    navigator.clipboard?.writeText(claimUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
+  }
+
   if (claimUrl) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-6 px-6 py-10 text-center">
+      <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-6 px-6 py-10 text-center">
         <Confetti />
+        <Badge>
+          <span>🎉</span> Siap dibagikan
+        </Badge>
         <div className="reveal-pop">
           <GiftCard
             occasion={draft.occasion}
@@ -96,56 +109,64 @@ export default function CreatePage() {
             theme={draft.theme}
           />
         </div>
-        <h2 className="text-2xl font-bold text-coral-600">Kado siap dibagikan</h2>
-        <p className="text-sm text-coral-700/80">
-          Bagikan link ini. Penerima cukup buka dan login dengan Google.
+        <h2 className="text-2xl font-extrabold text-ink">Kado kamu jadi</h2>
+        <p className="-mt-3 text-sm text-ink/60">
+          Bagikan link ini. Penerima cukup buka dan login Google.
         </p>
-        <div className="flex w-full items-center gap-2 rounded-xl bg-white/80 p-3 ring-1 ring-coral-100">
+        <div className="glass flex w-full items-center gap-2 rounded-2xl p-2 pl-4">
           <input
             readOnly
             value={claimUrl}
-            className="w-full bg-transparent text-sm text-coral-700 outline-none"
+            className="w-full bg-transparent text-sm text-ink/70 outline-none"
           />
-          <button
-            onClick={() => navigator.clipboard?.writeText(claimUrl)}
-            className="shrink-0 rounded-lg bg-coral-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-coral-600"
-          >
-            Salin
-          </button>
+          <PillButton onClick={copy} className="shrink-0 px-4 py-2.5 text-sm">
+            {copied ? "Tersalin ✓" : "Salin"}
+          </PillButton>
         </div>
-        <a href="/" className="text-sm text-coral-600 underline">
+        <Link href="/" className="text-sm font-semibold text-coral-600">
           Buat kado lain
-        </a>
+        </Link>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-6 px-6 py-10">
-      <Stepper total={STEPS.length} current={step} />
-
-      <div className="flex justify-center">
-        <GiftCard
-          occasion={draft.occasion}
-          amountDisplay={amountDisplay}
-          message={draft.message}
-          theme={draft.theme}
-        />
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 pb-8 pt-10">
+      <div className="mb-6 flex items-center gap-3">
+        <Link
+          href="/"
+          className="soft flex h-9 w-9 items-center justify-center rounded-full text-ink/60"
+          aria-label="Kembali ke beranda"
+        >
+          ←
+        </Link>
+        <Stepper total={STEPS.length} current={step} />
       </div>
 
-      <div className="flex-1">
+      <div className="mb-6 flex justify-center">
+        <div className="w-72">
+          <GiftCard
+            occasion={draft.occasion}
+            amountDisplay={amountDisplay}
+            message={draft.message}
+            theme={draft.theme}
+          />
+        </div>
+      </div>
+
+      <div key={step} className="rise-in flex-1">
         {step === 0 && (
           <Field label="Untuk acara apa?">
             <div className="grid grid-cols-2 gap-3">
               {OCCASIONS.map((o) => (
-                <Choice
+                <Tile
                   key={o.id}
                   active={draft.occasion === o.id}
                   onClick={() => setDraft({ ...draft, occasion: o.id })}
                 >
-                  <span className="text-2xl">{o.emoji}</span>
-                  <span>{o.label}</span>
-                </Choice>
+                  <span className="text-3xl">{o.emoji}</span>
+                  <span className="text-sm font-semibold">{o.label}</span>
+                </Tile>
               ))}
             </div>
           </Field>
@@ -153,19 +174,22 @@ export default function CreatePage() {
 
         {step === 1 && (
           <Field label="Berapa nominalnya?">
-            <input
-              autoFocus
-              inputMode="numeric"
-              value={draft.amount}
-              onChange={(e) =>
-                setDraft({
-                  ...draft,
-                  amount: e.target.value.replace(/[^0-9.]/g, ""),
-                })
-              }
-              placeholder="250.000"
-              className="w-full rounded-xl border border-coral-200 bg-white px-4 py-3 text-lg outline-none focus:border-coral-400"
-            />
+            <div className="glass flex items-center rounded-2xl px-5 py-4">
+              <span className="text-2xl font-extrabold text-ink/40">Rp</span>
+              <input
+                autoFocus
+                inputMode="numeric"
+                value={draft.amount}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    amount: e.target.value.replace(/[^0-9.]/g, ""),
+                  })
+                }
+                placeholder="250.000"
+                className="w-full bg-transparent px-3 text-2xl font-extrabold text-ink outline-none placeholder:text-ink/25"
+              />
+            </div>
           </Field>
         )}
 
@@ -177,8 +201,11 @@ export default function CreatePage() {
               onChange={(e) => setDraft({ ...draft, message: e.target.value })}
               placeholder="Selamat ya, semoga harimu menyenangkan."
               rows={4}
-              className="w-full rounded-xl border border-coral-200 bg-white px-4 py-3 outline-none focus:border-coral-400"
+              className="glass w-full resize-none rounded-2xl px-5 py-4 text-ink outline-none placeholder:text-ink/30"
             />
+            <p className="mt-2 text-right text-xs text-ink/40">
+              {draft.message.length}/280
+            </p>
           </Field>
         )}
 
@@ -186,19 +213,19 @@ export default function CreatePage() {
           <Field label="Pilih tema kartu">
             <div className="grid grid-cols-2 gap-3">
               {CARD_THEMES.map((t) => (
-                <Choice
+                <Tile
                   key={t.id}
                   active={draft.theme === t.id}
                   onClick={() => setDraft({ ...draft, theme: t.id })}
                 >
                   <span
-                    className="h-6 w-6 rounded-full"
+                    className="h-9 w-9 rounded-full ring-2 ring-white"
                     style={{
                       background: `linear-gradient(135deg, ${t.from}, ${t.to})`,
                     }}
                   />
-                  <span>{t.label}</span>
-                </Choice>
+                  <span className="text-sm font-semibold">{t.label}</span>
+                </Tile>
               ))}
             </div>
           </Field>
@@ -206,19 +233,31 @@ export default function CreatePage() {
 
         {step === 4 && (
           <Field label="Aturan kado">
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2.5">
               {RULE_TYPES.map((r) => (
-                <Choice
+                <button
                   key={r.id}
-                  active={draft.rule === r.id}
                   onClick={() => setDraft({ ...draft, rule: r.id })}
-                  wide
+                  className={`flex items-center gap-3 rounded-2xl px-4 py-4 text-left text-sm font-semibold transition active:scale-[0.99] ${
+                    draft.rule === r.id
+                      ? "bg-ink text-white shadow-lg shadow-ink/20"
+                      : "glass text-ink/80"
+                  }`}
                 >
-                  <span className="text-left text-sm">{r.label}</span>
-                </Choice>
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] ${
+                      draft.rule === r.id
+                        ? "bg-white text-ink"
+                        : "ring-2 ring-ink/15"
+                    }`}
+                  >
+                    {draft.rule === r.id ? "✓" : ""}
+                  </span>
+                  {r.label}
+                </button>
               ))}
             </div>
-            <p className="mt-3 text-xs text-coral-700/70">
+            <p className="mt-3 text-xs leading-relaxed text-ink/50">
               Aturan dijamin oleh kode, bukan oleh kami. Kalau tidak dibuka,
               kado kembali sendiri ke kamu.
             </p>
@@ -227,46 +266,36 @@ export default function CreatePage() {
 
         {step === 5 && (
           <Field label="Siap kirim?">
-            <ul className="space-y-2 rounded-xl bg-white/70 p-4 text-sm text-coral-700 ring-1 ring-coral-100">
+            <div className="glass flex flex-col gap-3 rounded-2xl p-5 text-sm">
               <Row k="Acara" v={OCCASIONS.find((o) => o.id === draft.occasion)?.label ?? ""} />
               <Row k="Nominal" v={amountDisplay} />
               <Row k="Tema" v={CARD_THEMES.find((t) => t.id === draft.theme)?.label ?? ""} />
               <Row k="Aturan" v={RULE_TYPES.find((r) => r.id === draft.rule)?.label ?? ""} />
-            </ul>
+            </div>
           </Field>
         )}
       </div>
 
       {error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+        <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
           {error}
         </p>
       )}
 
-      <div className="flex gap-3">
+      <div className="mt-6 flex gap-3">
         {step > 0 && (
-          <button
-            onClick={back}
-            className="rounded-full border border-coral-300 px-6 py-3 font-semibold text-coral-600"
-          >
+          <PillButton variant="light" onClick={back} className="px-6">
             Kembali
-          </button>
+          </PillButton>
         )}
         {step < STEPS.length - 1 ? (
-          <button
-            onClick={next}
-            className="flex-1 rounded-full bg-coral-500 px-6 py-3 font-semibold text-white hover:bg-coral-600"
-          >
-            Lanjut
-          </button>
+          <PillButton onClick={next} className="flex-1">
+            Lanjut <span aria-hidden>→</span>
+          </PillButton>
         ) : (
-          <button
-            onClick={submit}
-            disabled={submitting}
-            className="flex-1 rounded-full bg-coral-500 px-6 py-3 font-semibold text-white hover:bg-coral-600 disabled:opacity-60"
-          >
-            {submitting ? "Membuat..." : "Buat kado"}
-          </button>
+          <PillButton onClick={submit} disabled={submitting} className="flex-1">
+            {submitting ? "Membuat..." : "Buat kado 🎁"}
+          </PillButton>
         )}
       </div>
     </main>
@@ -275,33 +304,29 @@ export default function CreatePage() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold text-coral-700">{label}</h2>
+    <div className="flex flex-col gap-4">
+      <h2 className="text-xl font-extrabold tracking-tight text-ink">{label}</h2>
       {children}
     </div>
   );
 }
 
-function Choice({
+function Tile({
   active,
   onClick,
   children,
-  wide,
 }: {
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
-  wide?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-3 rounded-xl border px-4 py-3 font-medium transition ${
-        wide ? "justify-start" : "flex-col justify-center"
-      } ${
+      className={`flex flex-col items-center justify-center gap-2 rounded-2xl px-4 py-5 transition active:scale-[0.98] ${
         active
-          ? "border-coral-500 bg-coral-50 text-coral-700"
-          : "border-coral-200 bg-white text-coral-600 hover:border-coral-300"
+          ? "bg-ink text-white shadow-lg shadow-ink/20"
+          : "glass text-ink/80"
       }`}
     >
       {children}
@@ -311,9 +336,9 @@ function Choice({
 
 function Row({ k, v }: { k: string; v: string }) {
   return (
-    <li className="flex justify-between">
-      <span className="text-coral-500">{k}</span>
-      <span className="font-semibold">{v}</span>
-    </li>
+    <div className="flex items-center justify-between">
+      <span className="text-ink/50">{k}</span>
+      <span className="font-bold text-ink">{v}</span>
+    </div>
   );
 }

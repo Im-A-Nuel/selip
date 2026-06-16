@@ -21,28 +21,38 @@ export function GiftCard({
   const o = occasionById(occasion);
   return (
     <div
-      className="w-full max-w-sm overflow-hidden rounded-3xl p-6 text-white shadow-xl shadow-coral-300/40"
+      className="relative w-full max-w-sm overflow-hidden rounded-4xl p-7 text-white"
       style={{
-        background: `linear-gradient(135deg, ${t.from} 0%, ${t.to} 100%)`,
+        background: `linear-gradient(140deg, ${t.from} 0%, ${t.to} 100%)`,
+        boxShadow: `0 24px 60px -20px ${t.from}aa, inset 0 1px 0 rgba(255,255,255,0.25)`,
       }}
     >
-      <div className="flex items-center justify-between">
-        <span className="text-3xl" role="img" aria-label={o.label}>
-          {o.emoji}
-        </span>
-        <span className="text-xs font-semibold uppercase tracking-wide text-white/80">
-          {o.label}
-        </span>
+      {/* glossy sheen */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/20 blur-2xl"
+      />
+      {/* stamp corner */}
+      <div className="absolute right-5 top-5 flex h-12 w-12 rotate-6 items-center justify-center rounded-2xl bg-white/20 text-2xl ring-1 ring-white/40 backdrop-blur">
+        {o.emoji}
       </div>
-      <p className="mt-6 text-sm text-white/80">Untukmu</p>
-      <p className="mt-1 text-4xl font-bold tabular-nums">
+
+      <span className="text-xs font-bold uppercase tracking-widest text-white/85">
+        {o.label}
+      </span>
+      <p className="mt-10 text-sm font-medium text-white/80">Untukmu</p>
+      <p className="mt-1 text-[2.6rem] font-extrabold leading-none tabular-nums drop-shadow-sm">
         {revealed ? amountDisplay : "• • •"}
       </p>
       {message ? (
-        <p className="mt-4 border-t border-white/25 pt-4 text-sm text-white/90">
+        <p className="mt-5 border-t border-white/25 pt-4 text-sm leading-relaxed text-white/90">
           {message}
         </p>
-      ) : null}
+      ) : (
+        <div className="mt-5 border-t border-white/25 pt-4 text-sm text-white/70">
+          Selip
+        </div>
+      )}
     </div>
   );
 }

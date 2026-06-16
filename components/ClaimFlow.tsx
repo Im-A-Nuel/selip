@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { GiftCard } from "@/components/GiftCard";
 import { Confetti } from "@/components/Confetti";
+import { Badge, PillButton } from "@/components/ui";
 import { DEST_CHAINS } from "@/lib/constants";
 import { isMagicConfigured, loginWithGoogle } from "@/lib/magic";
 
@@ -38,12 +39,10 @@ export function ClaimFlow({
     setNote(null);
     try {
       if (isMagicConfigured()) {
-        // Real path: Google login, then return here to finish the claim.
         const redirect = `${window.location.origin}${window.location.pathname}`;
         await loginWithGoogle(redirect);
         return; // browser redirects away
       }
-      // Demo path (no keys yet): play the reveal so the flow is testable.
       setPhase("opening");
       setTimeout(() => setPhase("revealed"), 900);
       setNote("Mode demo: login dilewati karena kunci belum diatur.");
@@ -56,8 +55,11 @@ export function ClaimFlow({
 
   if (phase === "revealed") {
     return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-6 px-6 py-10 text-center">
+      <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-6 px-6 py-10 text-center">
         <Confetti />
+        <Badge>
+          <span>🎉</span> Hadiah terbuka
+        </Badge>
         <div className="reveal-pop">
           <GiftCard
             occasion={view.occasion}
@@ -66,41 +68,52 @@ export function ClaimFlow({
             theme={view.card_theme}
           />
         </div>
-        <h1 className="text-2xl font-bold text-coral-600">Hadiahnya buat kamu</h1>
-        <div className="w-full">
-          <label className="mb-2 block text-sm text-coral-700/80">
+        <h1 className="text-2xl font-extrabold text-ink">
+          Hadiahnya buat kamu 💛
+        </h1>
+        <div className="glass w-full rounded-2xl p-4 text-left">
+          <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-ink/50">
             Mau diterima ke mana?
           </label>
-          <select
-            value={dest}
-            onChange={(e) => setDest(e.target.value)}
-            className="w-full rounded-xl border border-coral-200 bg-white px-4 py-3 outline-none focus:border-coral-400"
-          >
+          <div className="grid grid-cols-2 gap-2">
             {DEST_CHAINS.map((c) => (
-              <option key={c.id} value={c.id}>
+              <button
+                key={c.id}
+                onClick={() => setDest(c.id)}
+                className={`rounded-xl px-3 py-2.5 text-sm font-semibold transition active:scale-[0.98] ${
+                  dest === c.id
+                    ? "bg-ink text-white"
+                    : "bg-white/70 text-ink/70 ring-1 ring-ink/5"
+                }`}
+              >
                 {c.label}
-              </option>
+              </button>
             ))}
-          </select>
+          </div>
         </div>
-        <button
-          className="w-full rounded-full bg-coral-500 px-6 py-3 font-semibold text-white hover:bg-coral-600"
+        <PillButton
+          className="w-full py-4 text-base"
           onClick={() =>
             setNote(
               "Pencairan lintas chain dijalankan saat SDK dihubungkan (minggu 4).",
             )
           }
         >
-          Terima hadiah
-        </button>
-        {note && <p className="text-xs text-coral-700/70">{note}</p>}
+          Terima hadiah →
+        </PillButton>
+        {note && <p className="text-xs text-ink/50">{note}</p>}
       </main>
     );
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-6 px-6 py-10 text-center">
-      <div className={phase === "opening" ? "animate-pulse" : ""}>
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-6 px-6 py-10 text-center">
+      <Badge>
+        <span>🎁</span> Ada kado untukmu
+      </Badge>
+      <div
+        className={phase === "opening" ? "animate-pulse" : "float-slow [--rot:-2deg]"}
+      >
         <GiftCard
           occasion={view.occasion}
           amountDisplay={view.amount_display}
@@ -109,24 +122,25 @@ export function ClaimFlow({
           revealed={false}
         />
       </div>
-      <h1 className="text-2xl font-bold text-coral-600">Ada kado untukmu</h1>
-      <p className="max-w-sm text-sm text-coral-700/80">
+      <h1 className="max-w-xs text-[1.8rem] font-extrabold leading-tight text-ink">
+        Seseorang menyelipkan hadiah
+      </h1>
+      <p className="-mt-2 max-w-sm text-sm leading-relaxed text-ink/60">
         Buka dengan akun Google kamu. Tidak perlu apa pun yang lain, tidak perlu
         aplikasi, tidak perlu tahu soal teknisnya.
       </p>
-      <button
+      <PillButton
         disabled={busy || phase === "opening"}
         onClick={open}
-        className="w-full rounded-full bg-coral-500 px-6 py-3 font-semibold text-white hover:bg-coral-600 disabled:opacity-60"
+        className="w-full py-4 text-base"
       >
         {phase === "opening"
           ? "Membuka..."
           : busy
             ? "Menghubungkan..."
             : "Buka kado dengan Google"}
-      </button>
-      {note && <p className="text-xs text-coral-700/70">{note}</p>}
-      {/* giftId reserved for the claim POST once on-chain transfer lands */}
+      </PillButton>
+      {note && <p className="text-xs text-ink/50">{note}</p>}
       <span className="hidden" data-gift-id={giftId} />
     </main>
   );
