@@ -44,6 +44,7 @@ export default function CreatePage() {
   const [error, setError] = useState<string | null>(null);
   const [claimUrl, setClaimUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [dir, setDir] = useState<1 | -1>(1);
 
   // Funding (demo) state
   const [connected, setConnected] = useState(false);
@@ -70,16 +71,19 @@ export default function CreatePage() {
       setError("Enter an amount first.");
       return;
     }
+    setDir(1);
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   }
   function back() {
     setError(null);
+    setDir(-1);
     setStep((s) => Math.max(s - 1, 0));
   }
   function goto(target: number) {
     // Only allow jumping to a step already reached.
     if (target <= step) {
       setError(null);
+      setDir(target > step ? 1 : -1);
       setStep(target);
     }
   }
@@ -235,13 +239,14 @@ export default function CreatePage() {
         </div>
       </div>
 
-      <div key={step} className="rise-in flex-1">
+      <div key={step} className={`flex-1 ${dir === 1 ? "step-fwd" : "step-back"}`}>
         {step === 0 && (
           <Field label="What's the occasion?">
-            <div className="grid grid-cols-2 gap-3">
-              {OCCASIONS.map((o) => (
+            <div className="stagger grid grid-cols-2 gap-3">
+              {OCCASIONS.map((o, i) => (
                 <Tile
                   key={o.id}
+                  index={i}
                   active={draft.occasion === o.id}
                   onClick={() => setDraft({ ...draft, occasion: o.id })}
                 >
@@ -306,10 +311,11 @@ export default function CreatePage() {
 
         {step === 3 && (
           <Field label="Pick a card theme">
-            <div className="grid grid-cols-2 gap-3">
-              {CARD_THEMES.map((t) => (
+            <div className="stagger grid grid-cols-2 gap-3">
+              {CARD_THEMES.map((t, i) => (
                 <Tile
                   key={t.id}
+                  index={i}
                   active={draft.theme === t.id}
                   onClick={() => setDraft({ ...draft, theme: t.id })}
                 >
@@ -333,10 +339,10 @@ export default function CreatePage() {
                 <button
                   key={r.id}
                   onClick={() => setDraft({ ...draft, rule: r.id })}
-                  className={`flex items-center gap-3 rounded-2xl px-4 py-4 text-left text-sm font-semibold transition active:scale-[0.99] ${
+                  className={`flex items-center gap-3 rounded-2xl px-4 py-4 text-left text-sm font-semibold transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.98] ${
                     draft.rule === r.id
                       ? "bg-ink text-white shadow-lg shadow-ink/20"
-                      : "glass text-ink/80"
+                      : "glass text-ink/80 hover:-translate-y-0.5"
                   }`}
                 >
                   <span
@@ -395,10 +401,10 @@ export default function CreatePage() {
                     <button
                       key={a.id}
                       onClick={() => setSource(a.id)}
-                      className={`flex items-center justify-between rounded-2xl px-4 py-3 text-left transition active:scale-[0.99] ${
+                      className={`flex items-center justify-between rounded-2xl px-4 py-3 text-left transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.98] ${
                         source === a.id
                           ? "bg-ink text-white shadow-lg shadow-ink/20"
-                          : "glass text-ink/80"
+                          : "glass text-ink/80 hover:-translate-y-0.5"
                       }`}
                     >
                       <span className="flex items-center gap-3">
@@ -473,19 +479,22 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function Tile({
   active,
   onClick,
+  index = 0,
   children,
 }: {
   active: boolean;
   onClick: () => void;
+  index?: number;
   children: React.ReactNode;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center justify-center gap-2 rounded-2xl px-4 py-5 transition active:scale-[0.98] ${
+      style={{ "--i": index } as React.CSSProperties}
+      className={`flex flex-col items-center justify-center gap-2 rounded-2xl px-4 py-5 transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.96] ${
         active
           ? "bg-ink text-white shadow-lg shadow-ink/20"
-          : "glass text-ink/80"
+          : "glass text-ink/80 hover:-translate-y-0.5"
       }`}
     >
       {children}

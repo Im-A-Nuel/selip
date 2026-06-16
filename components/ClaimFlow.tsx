@@ -82,10 +82,10 @@ export function ClaimFlow({
               <button
                 key={c.id}
                 onClick={() => setDest(c.id)}
-                className={`rounded-xl px-3 py-2.5 text-sm font-semibold transition active:scale-[0.98] ${
+                className={`rounded-xl px-3 py-2.5 text-sm font-semibold transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.96] ${
                   dest === c.id
-                    ? "bg-ink text-white"
-                    : "bg-white/70 text-ink/70 ring-1 ring-ink/5"
+                    ? "bg-ink text-white shadow-md shadow-ink/20"
+                    : "bg-white/70 text-ink/70 ring-1 ring-ink/5 hover:-translate-y-0.5 hover:bg-white"
                 }`}
               >
                 {c.label}

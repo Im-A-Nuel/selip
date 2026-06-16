@@ -21,7 +21,7 @@ export function GiftCard({
   const o = occasionById(occasion);
   return (
     <div
-      className="relative w-full max-w-sm overflow-hidden rounded-4xl p-7 text-white"
+      className="relative w-full max-w-sm overflow-hidden rounded-4xl p-7 text-white transition-[box-shadow] duration-500"
       style={{
         background: `linear-gradient(140deg, ${t.from} 0%, ${t.to} 100%)`,
         boxShadow: `0 24px 60px -20px ${t.from}aa, inset 0 1px 0 rgba(255,255,255,0.25)`,

@@ -15,6 +15,7 @@ import {
 interface Toast {
   id: number;
   message: string;
+  leaving?: boolean;
 }
 
 const ToastContext = createContext<(message: string) => void>(() => {});
@@ -31,20 +32,26 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     seq.current += 1;
     const id = seq.current;
     setToasts((t) => [...t, { id, message }]);
+    // Trigger the leave animation, then remove after it finishes.
     setTimeout(() => {
-      setToasts((t) => t.filter((x) => x.id !== id));
+      setToasts((t) => t.map((x) => (x.id === id ? { ...x, leaving: true } : x)));
+      setTimeout(() => {
+        setToasts((t) => t.filter((x) => x.id !== id));
+      }, 220);
     }, 2400);
   }, []);
 
   return (
     <ToastContext.Provider value={toast}>
       {children}
-      <div className="pointer-events-none fixed inset-x-0 bottom-6 z-[60] flex flex-col items-center gap-2 px-6">
+      <div className="pointer-events-none fixed inset-x-0 bottom-[calc(1.5rem+env(safe-area-inset-bottom))] z-[60] flex flex-col items-center gap-2 px-6">
         {toasts.map((t) => (
           <div
             key={t.id}
             role="status"
-            className="rise-in pointer-events-auto rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white shadow-xl shadow-ink/25"
+            className={`pointer-events-auto rounded-full bg-ink px-5 py-3 text-sm font-semibold text-white shadow-xl shadow-ink/25 ${
+              t.leaving ? "toast-out" : "toast-in"
+            }`}
           >
             {t.message}
           </div>

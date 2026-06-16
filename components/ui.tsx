@@ -5,11 +5,12 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 type PillVariant = "dark" | "light" | "ghost";
 
 const pillBase =
-  "relative inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100";
+  "relative inline-flex items-center justify-center gap-2 rounded-full font-semibold will-change-transform transition-[transform,background-color,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.96] disabled:opacity-50 disabled:active:scale-100 disabled:hover:translate-y-0";
 
 const pillVariants: Record<PillVariant, string> = {
-  dark: "bg-ink text-white shadow-lg shadow-ink/25 hover:bg-black",
-  light: "bg-white text-ink shadow-md shadow-ink/10 hover:bg-white/90",
+  dark: "bg-ink text-white shadow-lg shadow-ink/25 hover:bg-black hover:-translate-y-0.5 hover:shadow-xl hover:shadow-ink/30",
+  light:
+    "bg-white text-ink shadow-md shadow-ink/10 hover:bg-white hover:-translate-y-0.5 hover:shadow-lg",
   ghost: "bg-transparent text-ink/70 hover:text-ink",
 };
 
@@ -63,10 +64,10 @@ export function Chip({
 }: ButtonHTMLAttributes<HTMLButtonElement> & { active?: boolean }) {
   return (
     <button
-      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition active:scale-[0.97] ${
+      className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.94] ${
         active
           ? "bg-ink text-white shadow-md shadow-ink/20"
-          : "bg-white/70 text-ink/70 ring-1 ring-ink/5 hover:bg-white"
+          : "bg-white/70 text-ink/70 ring-1 ring-ink/5 hover:-translate-y-0.5 hover:bg-white"
       } ${className}`}
       {...props}
     >
