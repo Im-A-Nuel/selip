@@ -44,11 +44,15 @@ yarn-error.log*
 # claude local settings (machine-specific)
 .claude/settings.local.json
 
-# contracts build artifacts
+# contracts build artifacts + vendored libs (restore via: forge install)
 /contracts/out/
 /contracts/cache/
 /contracts/broadcast/
+/contracts/lib/
 /artifacts/
 
 # logs
 *.log
+
+# local npm config (registry mirror, machine-specific)
+.npmrc

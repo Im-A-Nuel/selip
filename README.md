@@ -32,6 +32,18 @@ cp .env.example .env.local   # isi kunci Particle, Magic, ZeroDev, RPC Arbitrum
 pnpm dev
 ```
 
+Tanpa kunci pun app tetap jalan: API memakai penyimpanan in-memory dan alur
+klaim memutar mode demo, jadi UI bisa diuji end-to-end secara lokal.
+
+### Contracts (Foundry, via WSL)
+
+```bash
+cd contracts
+forge install foundry-rs/forge-std   # vendor lib (di-gitignore)
+forge test                           # 7 test GiftEscrow
+forge script script/Deploy.s.sol --rpc-url arbitrum_sepolia --broadcast
+```
+
 ## Project Structure
 
 ```
