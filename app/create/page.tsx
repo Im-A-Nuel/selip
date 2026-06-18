@@ -438,7 +438,7 @@ export default function CreatePage() {
                 <button
                   key={p.id}
                   onClick={() => setDraft({ ...draft, protection: p.id })}
-                  className={`flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.98] ${
+                  className={`flex items-center gap-4 rounded-2xl px-4 py-3 text-left transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.98] ${
                     draft.protection === p.id
                       ? "bg-ink text-white shadow-lg shadow-ink/20"
                       : "glass text-ink/80 hover:-translate-y-0.5"
@@ -447,11 +447,9 @@ export default function CreatePage() {
                   <Image
                     src={p.icon}
                     alt=""
-                    width={52}
-                    height={52}
-                    className={`h-12 w-12 shrink-0 object-contain transition-[filter] duration-150 ${
-                      draft.protection === p.id ? "brightness-0 invert" : ""
-                    }`}
+                    width={64}
+                    height={64}
+                    className="h-16 w-16 shrink-0 object-contain drop-shadow-sm"
                   />
                   <span>
                     <span className="block text-sm font-bold">{p.label}</span>
