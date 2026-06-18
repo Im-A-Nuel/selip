@@ -11,19 +11,17 @@ const STEPS = [
 export default function Home() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 pb-10 pt-10">
-      {/* Hero illustration */}
-      <div className="relative mx-auto w-full max-w-sm">
-        <div className="float-slow">
-          <Image
-            src="/art/hero.webp"
-            alt="Two hands passing a smiling gift"
-            width={1200}
-            height={500}
-            priority
-            sizes="(max-width: 480px) 90vw, 384px"
-            className="h-auto w-full"
-          />
-        </div>
+      {/* Hero illustration, full-bleed warm panel */}
+      <div className="relative mx-auto w-full max-w-sm overflow-hidden rounded-4xl shadow-xl shadow-coral-300/30 ring-1 ring-black/5">
+        <Image
+          src="/art/hero.webp"
+          alt="Two hands passing a smiling gift"
+          width={1200}
+          height={800}
+          priority
+          sizes="(max-width: 480px) 90vw, 384px"
+          className="h-auto w-full"
+        />
       </div>
 
       {/* Hero copy */}
