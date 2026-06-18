@@ -1,9 +1,11 @@
 "use client";
 
-// Recipient-facing claim flow: closed gift -> login (Google) -> reveal + cash
-// out. The actual on-chain claim (EOA->UA upgrade via 7702, cross-chain route)
-// is wired in /lib during weeks 3-4; here the UI states and copy are complete
-// and jargon-free, with a graceful path when SDK keys are not yet configured.
+// Recipient claim flow:
+//   closed -> (login method) -> (gate: pin / email) -> opening -> revealed -> thanks
+//
+// The real on-chain claim (EOA->UA upgrade via 7702, cross-chain route) is wired
+// in /lib during weeks 3-4. Here the protection gate is enforced by the claim
+// API; when SDK keys are absent we run a demo that still exercises every gate.
 
 import { useState } from "react";
 import Image from "next/image";
@@ -11,10 +13,10 @@ import { GiftCard } from "@/components/GiftCard";
 import { Confetti } from "@/components/Confetti";
 import { Badge, PillButton } from "@/components/ui";
 import { useToast } from "@/components/Toast";
-import { DEST_CHAINS } from "@/lib/constants";
-import { isMagicConfigured, loginWithGoogle } from "@/lib/magic";
+import { DEST_CHAINS, LOGIN_METHODS } from "@/lib/constants";
+import { isMagicConfigured, loginWithOAuth } from "@/lib/magic";
 
-type Phase = "closed" | "opening" | "revealed";
+type Phase = "closed" | "gate" | "opening" | "revealed";
 
 interface PublicView {
   occasion: string;
@@ -23,6 +25,19 @@ interface PublicView {
   message: string;
   card_theme: string;
   status: string;
+  protection: "open" | "email" | "pin";
+  unlock_at: string | null;
+  locked: boolean;
+}
+
+function formatUnlock(iso: string | null): string {
+  if (!iso) return "";
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "";
+  return new Date(t).toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
 
 export function ClaimFlow({
@@ -38,18 +53,36 @@ export function ClaimFlow({
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
-  async function open() {
+  // gate inputs
+  const [pin, setPin] = useState("");
+  const [email, setEmail] = useState("");
+  const [gateError, setGateError] = useState<string | null>(null);
+
+  // thank-you
+  const [thanks, setThanks] = useState("");
+  const [thanksSent, setThanksSent] = useState(false);
+
+  const timeLocked = view.locked;
+
+  // Step 1: pick a login method. Real keys -> redirect; demo -> move on.
+  async function chooseLogin(method: string) {
     setBusy(true);
     setNote(null);
     try {
-      if (isMagicConfigured()) {
+      if (isMagicConfigured() && (method === "google" || method === "apple")) {
         const redirect = `${window.location.origin}${window.location.pathname}`;
-        await loginWithGoogle(redirect);
+        await loginWithOAuth(method, redirect);
         return; // browser redirects away
       }
-      setPhase("opening");
-      setTimeout(() => setPhase("revealed"), 1100);
-      setNote("Demo mode: sign-in skipped because keys are not set yet.");
+      // Demo (or email method): advance to the protection gate.
+      if (!isMagicConfigured()) {
+        setNote("Demo mode: sign-in is simulated because keys are not set.");
+      }
+      if (view.protection === "open") {
+        await doClaim();
+      } else {
+        setPhase("gate");
+      }
     } catch (e) {
       setNote((e as Error).message);
     } finally {
@@ -57,9 +90,108 @@ export function ClaimFlow({
     }
   }
 
+  // Step 2: verify the gate, then claim.
+  async function submitGate() {
+    setGateError(null);
+    if (view.protection === "pin" && pin.trim().length === 0) {
+      setGateError("Enter the secret code.");
+      return;
+    }
+    if (
+      view.protection === "email" &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+    ) {
+      setGateError("Enter the email this gift was sent to.");
+      return;
+    }
+    await doClaim();
+  }
+
+  async function doClaim() {
+    setBusy(true);
+    setGateError(null);
+    try {
+      const res = await fetch(`/api/gifts/${giftId}/claim`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          // Demo placeholders; real values come from the on-chain claim tx.
+          recipient_addr: "0xDEMORECIPIENT",
+          dest_chain: dest,
+          claim_tx: "0xDEMOCLAIMTX",
+          pin: view.protection === "pin" ? pin.trim() : undefined,
+          recipient_email:
+            view.protection === "email" ? email.trim() : undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const msg = data?.error?.message ?? "Could not open the gift.";
+        if (phase === "gate") setGateError(msg);
+        else setNote(msg);
+        return;
+      }
+      setPhase("opening");
+      setTimeout(() => setPhase("revealed"), 1100);
+    } catch {
+      const msg = "Network hiccup. Please try again.";
+      if (phase === "gate") setGateError(msg);
+      else setNote(msg);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendThanks() {
+    if (thanks.trim().length === 0) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/gifts/${giftId}/thanks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: thanks.trim() }),
+      });
+      if (res.ok) {
+        setThanksSent(true);
+        toast("Thank-you sent 💛");
+      } else {
+        toast("Could not send. Try again.");
+      }
+    } catch {
+      toast("Network hiccup.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // ---- Time-locked screen ----
+  if (timeLocked) {
+    return (
+      <Screen>
+        <Image
+          src="/art/state-expired.webp"
+          alt=""
+          width={200}
+          height={200}
+          priority
+          className="rise-in h-40 w-40 object-contain"
+        />
+        <h1 className="text-2xl font-extrabold text-ink">Not yet</h1>
+        <p className="max-w-sm text-sm text-ink/60">
+          This gift unlocks on{" "}
+          <span className="font-semibold text-ink">
+            {formatUnlock(view.unlock_at)}
+          </span>
+          . Come back then to open it.
+        </p>
+      </Screen>
+    );
+  }
+
+  // ---- Revealed ----
   if (phase === "revealed") {
     return (
-      <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-6 px-6 py-10 text-center">
+      <Screen>
         <Confetti />
         <Image
           src="/art/reveal.webp"
@@ -78,9 +210,8 @@ export function ClaimFlow({
             theme={view.card_theme}
           />
         </div>
-        <h1 className="text-2xl font-extrabold text-ink">
-          This gift is yours 💛
-        </h1>
+        <h1 className="text-2xl font-extrabold text-ink">This gift is yours 💛</h1>
+
         <div className="glass w-full rounded-2xl p-4 text-left">
           <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-ink/50">
             Where should it land?
@@ -101,79 +232,156 @@ export function ClaimFlow({
             ))}
           </div>
         </div>
+
         <PillButton
           className="w-full py-4 text-base"
           onClick={() =>
             toast("Cross-chain cash-out runs once the SDK is wired (week 4)")
           }
         >
-          Claim gift →
+          Claim to {DEST_CHAINS.find((c) => c.id === dest)?.label} →
         </PillButton>
-      </main>
+
+        {/* Thank-you reply */}
+        {thanksSent ? (
+          <p className="text-sm font-semibold text-coral-600">
+            Your thank-you is on its way 💌
+          </p>
+        ) : (
+          <div className="glass w-full rounded-2xl p-4 text-left">
+            <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-ink/50">
+              Say thanks to the sender
+            </label>
+            <textarea
+              value={thanks}
+              maxLength={280}
+              rows={2}
+              onChange={(e) => setThanks(e.target.value)}
+              placeholder="Thank you so much! 🥹"
+              className="w-full resize-none rounded-xl bg-white/70 px-3 py-2.5 text-sm text-ink outline-none ring-1 ring-ink/5 placeholder:text-ink/30"
+            />
+            <PillButton
+              variant="light"
+              loading={busy}
+              disabled={thanks.trim().length === 0}
+              onClick={sendThanks}
+              className="mt-2 w-full py-2.5 text-sm"
+            >
+              Send thank-you
+            </PillButton>
+          </div>
+        )}
+      </Screen>
     );
   }
 
+  // ---- Protection gate ----
+  if (phase === "gate") {
+    return (
+      <Screen>
+        <Image
+          src="/art/mascot.webp"
+          alt=""
+          width={160}
+          height={160}
+          priority
+          className="rise-in h-28 w-28 object-contain"
+        />
+        <h1 className="text-2xl font-extrabold text-ink">
+          {view.protection === "pin" ? "Enter the secret code" : "Confirm it's you"}
+        </h1>
+        <p className="-mt-1 max-w-sm text-sm text-ink/60">
+          {view.protection === "pin"
+            ? "The sender shared a code with you. Enter it to open the gift."
+            : "This gift is reserved for one email address. Enter it to continue."}
+        </p>
+        <div className="glass flex w-full items-center rounded-2xl px-4 py-3">
+          {view.protection === "pin" ? (
+            <input
+              autoFocus
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              placeholder="Secret code"
+              className="w-full bg-transparent text-center text-lg font-bold tracking-wider text-ink outline-none placeholder:text-ink/30"
+            />
+          ) : (
+            <input
+              autoFocus
+              type="email"
+              inputMode="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              className="w-full bg-transparent text-ink outline-none placeholder:text-ink/30"
+            />
+          )}
+        </div>
+        {gateError && (
+          <p className="rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-600">
+            {gateError}
+          </p>
+        )}
+        <PillButton
+          loading={busy}
+          onClick={submitGate}
+          className="w-full py-4 text-base"
+        >
+          Open gift
+        </PillButton>
+      </Screen>
+    );
+  }
+
+  // ---- Closed: login methods ----
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-6 px-6 py-10 text-center">
+    <Screen>
       <Badge>
         <span>🎁</span> A gift for you
       </Badge>
-      <div
-        className={`relative ${phase === "closed" ? "float-slow [--rot:-2deg]" : ""}`}
-      >
-        <div className={phase === "opening" ? "shake-anticipate" : ""}>
-          <GiftCard
-            occasion={view.occasion}
-            occasionLabel={view.occasion_label}
-            amountDisplay={view.amount_display}
-            message={view.message}
-            theme={view.card_theme}
-            revealed={false}
-          />
-        </div>
-
-        {/* Wrap + ribbon overlay; lifts away when opening. */}
-        <div
-          aria-hidden
-          className={`pointer-events-none absolute inset-0 overflow-hidden rounded-4xl ${
-            phase === "opening" ? "unwrap-lift" : ""
-          }`}
-        >
-          <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px]" />
-          {/* vertical ribbon */}
-          <div
-            className={`absolute inset-y-0 left-1/2 w-7 -translate-x-1/2 bg-white/40 ${
-              phase === "opening" ? "ribbon-left" : ""
-            }`}
-          />
-          {/* horizontal ribbon */}
-          <div
-            className={`absolute inset-x-0 top-1/2 h-7 -translate-y-1/2 bg-white/40 ${
-              phase === "opening" ? "ribbon-right" : ""
-            }`}
-          />
-          {/* bow */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl">
-            🎀
-          </div>
-        </div>
+      <div className="float-slow [--rot:-2deg]">
+        <GiftCard
+          occasion={view.occasion}
+          occasionLabel={view.occasion_label}
+          amountDisplay={view.amount_display}
+          message={view.message}
+          theme={view.card_theme}
+          revealed={false}
+        />
       </div>
       <h1 className="max-w-xs text-[1.8rem] font-extrabold leading-tight text-ink">
         Someone slipped you a gift
       </h1>
       <p className="-mt-2 max-w-sm text-sm leading-relaxed text-ink/60">
-        Open it with your Google account. Nothing else needed, no app to
-        install, no technical stuff to learn.
+        Open it by signing in. Nothing to install, no wallet, no technical stuff.
       </p>
-      <PillButton
-        loading={busy || phase === "opening"}
-        onClick={open}
-        className="w-full py-4 text-base"
-      >
-        Open gift with Google
-      </PillButton>
+
+      <div className="flex w-full flex-col gap-2.5">
+        {LOGIN_METHODS.map((m) => (
+          <PillButton
+            key={m.id}
+            variant={m.id === "google" ? "dark" : "light"}
+            loading={busy}
+            onClick={() => chooseLogin(m.id)}
+            className="w-full py-3.5 text-[15px]"
+          >
+            {m.icon && (
+              <span className="text-base font-black" aria-hidden>
+                {m.icon}
+              </span>
+            )}
+            {m.label}
+          </PillButton>
+        ))}
+      </div>
       {note && <p className="text-xs text-ink/50">{note}</p>}
-      <span className="hidden" data-gift-id={giftId} />
+    </Screen>
+  );
+}
+
+function Screen({ children }: { children: React.ReactNode }) {
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-6 px-6 py-10 text-center">
+      {children}
     </main>
   );
 }

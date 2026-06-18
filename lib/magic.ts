@@ -35,13 +35,21 @@ async function getMagic() {
   return magicInstance;
 }
 
-// Start Google login redirect. Returns to redirectURI on success.
-export async function loginWithGoogle(redirectURI: string): Promise<void> {
+// Start an OAuth login redirect (google, apple, ...). Returns to redirectURI.
+export async function loginWithOAuth(
+  provider: string,
+  redirectURI: string,
+): Promise<void> {
   const magic = await getMagic();
   await magic.oauth.loginWithRedirect({
-    provider: "google" as OAuthProvider,
+    provider: provider as OAuthProvider,
     redirectURI,
   });
+}
+
+// Start Google login redirect. Returns to redirectURI on success.
+export async function loginWithGoogle(redirectURI: string): Promise<void> {
+  return loginWithOAuth("google", redirectURI);
 }
 
 // Email magic-link login (fallback when Google is unavailable).

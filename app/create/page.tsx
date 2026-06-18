@@ -246,9 +246,16 @@ export default function CreatePage() {
             </PillButton>
           </div>
         </div>
-        <Link href="/" className="text-sm font-semibold text-coral-600">
-          Create another gift
-        </Link>
+        <div className="flex items-center gap-4 text-sm font-semibold">
+          {/* full reload to reset the wizard */}
+          <a href="/create" className="text-coral-600">
+            Create another
+          </a>
+          <span className="text-ink/20">·</span>
+          <Link href="/gifts" className="text-ink/60">
+            My gifts
+          </Link>
+        </div>
       </main>
     );
   }

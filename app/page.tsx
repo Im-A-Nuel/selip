@@ -76,6 +76,12 @@ export default function Home() {
             Create a gift <span aria-hidden>→</span>
           </PillButton>
         </Link>
+        <Link
+          href="/gifts"
+          className="text-sm font-semibold text-ink/60 hover:text-ink"
+        >
+          My gifts
+        </Link>
         <p className="text-xs text-ink/40">No seed phrase. Nothing to install.</p>
       </div>
     </main>
