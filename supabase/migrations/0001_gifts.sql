@@ -6,7 +6,8 @@ create extension if not exists "pgcrypto";
 create table if not exists public.gifts (
   id                 uuid primary key default gen_random_uuid(),
   claim_slug         text not null unique,
-  occasion           text not null check (occasion in ('birthday','thr','graduation','wedding')),
+  occasion           text not null check (occasion in ('birthday','thr','graduation','wedding','custom')),
+  occasion_label     text,
   amount_display     text not null,
   message            text,
   card_theme         text not null,

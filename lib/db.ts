@@ -56,6 +56,7 @@ class MemoryRepo implements GiftRepo {
       id,
       claim_slug: slug,
       occasion: input.occasion,
+      occasion_label: input.occasion_label,
       amount_display: input.amount_display,
       message: input.message,
       card_theme: input.card_theme,
@@ -125,6 +126,7 @@ class SupabaseRepo implements GiftRepo {
       .insert({
         claim_slug: slug,
         occasion: input.occasion,
+        occasion_label: input.occasion_label ?? null,
         amount_display: input.amount_display,
         message: input.message ?? null,
         card_theme: input.card_theme,

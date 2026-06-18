@@ -22,6 +22,7 @@ import {
 
 interface Draft {
   occasion: OccasionId;
+  customLabel: string;
   amount: string;
   message: string;
   theme: CardThemeId;
@@ -36,6 +37,7 @@ export default function CreatePage() {
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Draft>({
     occasion: "birthday",
+    customLabel: "",
     amount: "",
     message: "",
     theme: "sunrise",
@@ -67,6 +69,10 @@ export default function CreatePage() {
 
   function next() {
     setError(null);
+    if (step === 0 && draft.occasion === "custom" && !draft.customLabel.trim()) {
+      setError("Name your custom occasion.");
+      return;
+    }
     if (step === 1 && !draft.amount.trim()) {
       setError("Enter an amount first.");
       return;
@@ -112,6 +118,8 @@ export default function CreatePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           occasion: draft.occasion,
+          occasion_label:
+            draft.occasion === "custom" ? draft.customLabel.trim() : undefined,
           amount_display: amountDisplay,
           message: draft.message || undefined,
           card_theme: draft.theme,
@@ -175,6 +183,7 @@ export default function CreatePage() {
         <div className="reveal-pop">
           <GiftCard
             occasion={draft.occasion}
+            occasionLabel={draft.customLabel}
             amountDisplay={amountDisplay}
             message={draft.message}
             theme={draft.theme}
@@ -237,6 +246,7 @@ export default function CreatePage() {
         <div className="w-72">
           <GiftCard
             occasion={draft.occasion}
+            occasionLabel={draft.customLabel}
             amountDisplay={amountDisplay}
             message={draft.message}
             theme={draft.theme}
@@ -254,12 +264,33 @@ export default function CreatePage() {
                   index={i}
                   active={draft.occasion === o.id}
                   onClick={() => setDraft({ ...draft, occasion: o.id })}
+                  className={o.id === "custom" ? "col-span-2 flex-row" : ""}
                 >
-                  <span className="text-3xl">{o.emoji}</span>
+                  <Image
+                    src={o.icon}
+                    alt=""
+                    width={48}
+                    height={48}
+                    className="h-11 w-11 object-contain"
+                  />
                   <span className="text-sm font-semibold">{o.label}</span>
                 </Tile>
               ))}
             </div>
+            {draft.occasion === "custom" && (
+              <div className="glass rise-in flex items-center rounded-2xl px-4 py-3">
+                <input
+                  autoFocus
+                  maxLength={40}
+                  value={draft.customLabel}
+                  onChange={(e) =>
+                    setDraft({ ...draft, customLabel: e.target.value })
+                  }
+                  placeholder="e.g. Anniversary, New job, Just because"
+                  className="w-full bg-transparent text-ink outline-none placeholder:text-ink/30"
+                />
+              </div>
+            )}
           </Field>
         )}
 
@@ -367,9 +398,16 @@ export default function CreatePage() {
                   {amountDisplay}
                 </p>
               </div>
-              <span className="text-3xl">
-                {OCCASIONS.find((o) => o.id === draft.occasion)?.emoji}
-              </span>
+              <Image
+                src={
+                  OCCASIONS.find((o) => o.id === draft.occasion)?.icon ??
+                  "/art/occ-custom.webp"
+                }
+                alt=""
+                width={48}
+                height={48}
+                className="h-12 w-12 object-contain"
+              />
             </div>
 
             {!connected ? (
@@ -471,11 +509,13 @@ function Tile({
   active,
   onClick,
   index = 0,
+  className = "",
   children,
 }: {
   active: boolean;
   onClick: () => void;
   index?: number;
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -486,7 +526,7 @@ function Tile({
         active
           ? "bg-ink text-white shadow-lg shadow-ink/20"
           : "glass text-ink/80 hover:-translate-y-0.5"
-      }`}
+      } ${className}`}
     >
       {children}
     </button>

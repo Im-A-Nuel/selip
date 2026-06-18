@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
         gift = await repo.create(
           {
             occasion: body.occasion,
+            occasion_label: body.occasion_label,
             amount_display: body.amount_display,
             message: body.message,
             card_theme: body.card_theme,

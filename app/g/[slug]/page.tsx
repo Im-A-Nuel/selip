@@ -16,8 +16,11 @@ export async function generateMetadata({
   const { slug } = await params;
   const gift = await getRepo().getBySlug(slug);
   if (!gift) return { title: "Gift not found - Selip" };
-  const occasion = occasionById(gift.occasion);
-  const title = `A ${occasion.label} gift for you ${occasion.emoji}`;
+  const label =
+    gift.occasion === "custom"
+      ? gift.occasion_label?.trim() || "special"
+      : occasionById(gift.occasion).label;
+  const title = `A ${label} gift for you 🎁`;
   const description = "Open it with Google. No wallet needed. - Selip";
   return {
     title,

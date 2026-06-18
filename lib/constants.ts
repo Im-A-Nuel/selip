@@ -3,10 +3,11 @@
 // Copy is English; ids stay stable so the DB enum constraints do not change.
 
 export const OCCASIONS = [
-  { id: "birthday", label: "Birthday", emoji: "🎂", art: "/art/card-birthday.webp" },
-  { id: "thr", label: "Holiday", emoji: "🧧", art: "/art/card-festive.webp" },
-  { id: "graduation", label: "Graduation", emoji: "🎓", art: "/art/card-graduation.webp" },
-  { id: "wedding", label: "Wedding", emoji: "💍", art: "/art/card-wedding.webp" },
+  { id: "birthday", label: "Birthday", icon: "/art/occ-birthday.webp", art: "/art/card-birthday.webp" },
+  { id: "thr", label: "Holiday", icon: "/art/occ-holiday.webp", art: "/art/card-festive.webp" },
+  { id: "graduation", label: "Graduation", icon: "/art/occ-graduation.webp", art: "/art/card-graduation.webp" },
+  { id: "wedding", label: "Wedding", icon: "/art/occ-wedding.webp", art: "/art/card-wedding.webp" },
+  { id: "custom", label: "Custom", icon: "/art/occ-custom.webp", art: null },
 ] as const;
 
 export type OccasionId = (typeof OCCASIONS)[number]["id"];

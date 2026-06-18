@@ -13,6 +13,8 @@ export interface Gift {
   id: string;
   claim_slug: string;
   occasion: string;
+  /** free-text label when occasion === "custom" */
+  occasion_label?: string;
   amount_display: string;
   message?: string;
   card_theme: string;
@@ -29,6 +31,7 @@ export interface Gift {
 
 export interface CreateGiftInput {
   occasion: string;
+  occasion_label?: string;
   amount_display: string;
   message?: string;
   card_theme: string;
@@ -71,6 +74,15 @@ export function validateCreateInput(
   if (!input.occasion || !isOccasion(input.occasion)) {
     return { ok: false, error: "Invalid occasion." };
   }
+  if (input.occasion === "custom") {
+    const label = input.occasion_label?.trim() ?? "";
+    if (label.length === 0) {
+      return { ok: false, error: "Name your custom occasion." };
+    }
+    if (label.length > 40) {
+      return { ok: false, error: "Occasion name too long (max 40)." };
+    }
+  }
   if (!input.amount_display || input.amount_display.trim().length === 0) {
     return { ok: false, error: "Amount is required." };
   }
@@ -91,6 +103,7 @@ export function validateCreateInput(
 export function toPublicView(gift: Gift) {
   return {
     occasion: gift.occasion,
+    occasion_label: gift.occasion_label ?? "",
     amount_display: gift.amount_display,
     message: gift.message ?? "",
     card_theme: gift.card_theme,

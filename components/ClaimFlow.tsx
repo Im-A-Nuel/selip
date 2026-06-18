@@ -18,6 +18,7 @@ type Phase = "closed" | "opening" | "revealed";
 
 interface PublicView {
   occasion: string;
+  occasion_label?: string;
   amount_display: string;
   message: string;
   card_theme: string;
@@ -71,6 +72,7 @@ export function ClaimFlow({
         <div className="reveal-pop">
           <GiftCard
             occasion={view.occasion}
+            occasionLabel={view.occasion_label}
             amountDisplay={view.amount_display}
             message={view.message}
             theme={view.card_theme}
@@ -122,6 +124,7 @@ export function ClaimFlow({
         <div className={phase === "opening" ? "shake-anticipate" : ""}>
           <GiftCard
             occasion={view.occasion}
+            occasionLabel={view.occasion_label}
             amountDisplay={view.amount_display}
             message={view.message}
             theme={view.card_theme}
