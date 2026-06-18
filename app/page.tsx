@@ -27,7 +27,7 @@ export default function Home() {
       {/* Hero copy */}
       <div className="rise-in -mt-2 flex flex-col items-center text-center">
         <Badge>
-          <span>✨</span> No wallet needed
+          <span aria-hidden className="text-[10px] leading-none">✨</span> No wallet needed
         </Badge>
         <h1 className="mt-5 text-[2.7rem] font-extrabold leading-[1.05] tracking-tight text-ink">
           Give a gift,
