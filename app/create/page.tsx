@@ -447,9 +447,9 @@ export default function CreatePage() {
                   <Image
                     src={p.icon}
                     alt=""
-                    width={40}
-                    height={40}
-                    className={`h-9 w-9 shrink-0 object-contain transition-[filter] duration-150 ${
+                    width={52}
+                    height={52}
+                    className={`h-12 w-12 shrink-0 object-contain transition-[filter] duration-150 ${
                       draft.protection === p.id ? "brightness-0 invert" : ""
                     }`}
                   />

@@ -31,19 +31,19 @@ export const PROTECTION_OPTIONS = [
     id: "open",
     label: "Anyone with the link",
     desc: "Simplest. Whoever opens the link can claim.",
-    icon: "/art/prot-open.png",
+    icon: "/art/prot-open.webp",
   },
   {
     id: "email",
     label: "Only their email",
     desc: "Lock to one email address. Safest if the link leaks.",
-    icon: "/art/prot-email.png",
+    icon: "/art/prot-email.webp",
   },
   {
     id: "pin",
     label: "Secret code",
     desc: "Share a code separately. Needed to open.",
-    icon: "/art/prot-pin.png",
+    icon: "/art/prot-pin.webp",
   },
 ] as const;
 
