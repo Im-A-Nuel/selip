@@ -8,6 +8,7 @@ import { Stepper } from "@/components/Stepper";
 import { Confetti } from "@/components/Confetti";
 import { Chip, PillButton } from "@/components/ui";
 import { ShareButton } from "@/components/ShareButton";
+import { AssetIcon } from "@/components/AssetIcon";
 import { useToast } from "@/components/Toast";
 import {
   CURRENCY,
@@ -437,7 +438,7 @@ export default function CreatePage() {
                       }`}
                     >
                       <span className="flex items-center gap-3">
-                        <span className="text-xl">{a.emoji}</span>
+                        <AssetIcon token={a.token} chain={a.chain} />
                         <span className="text-sm font-bold">
                           {a.token}
                           <span
@@ -488,7 +489,7 @@ export default function CreatePage() {
             disabled={!connected || !source}
             className="flex-1"
           >
-            Fund &amp; create 🎁
+            Fund &amp; create
           </PillButton>
         )}
       </div>
