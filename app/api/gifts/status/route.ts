@@ -1,6 +1,11 @@
-// POST /api/gifts/status - resolve a list of gift ids to their sender-facing
-// status. Used by the "My gifts" dashboard, which tracks created ids locally
-// (no sender auth yet). Returns safe fields only; never secrets.
+// POST /api/gifts/status - resolve sender's gifts to their current status.
+//
+// Accepts either:
+//   { sender_id: string }            → query all gifts with this sender_id (preferred)
+//   { ids: string[] }                → query by explicit ids (legacy / fallback)
+//   { sender_id, ids }               → sender_id wins; ids used only if sender_id empty
+//
+// Returns safe fields only; never secrets.
 
 import type { NextRequest } from "next/server";
 import { getRepo } from "@/lib/db";
@@ -15,12 +20,25 @@ export async function POST(req: NextRequest) {
     return ERRORS.INVALID_INPUT("Invalid JSON body.");
   }
 
+  const senderId =
+    typeof body?.sender_id === "string" && body.sender_id.trim().length > 0
+      ? body.sender_id.trim().slice(0, 64)
+      : null;
+
   const ids: string[] = Array.isArray(body?.ids)
     ? body.ids.filter((x: unknown) => typeof x === "string").slice(0, 100)
     : [];
 
+  if (!senderId && ids.length === 0) {
+    return ok({ items: [] });
+  }
+
   try {
-    const gifts = await getRepo().listByIds(ids);
+    const repo = getRepo();
+    const gifts = senderId
+      ? await repo.listBySenderId(senderId)
+      : await repo.listByIds(ids);
+
     const items = gifts.map((g) => ({
       id: g.id,
       claim_slug: g.claim_slug,

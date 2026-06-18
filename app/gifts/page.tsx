@@ -8,7 +8,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { PillButton } from "@/components/ui";
 import { useToast } from "@/components/Toast";
-import { getGiftIds } from "@/lib/myGifts";
+import { getSenderId, getGiftIds } from "@/lib/myGifts";
 import { occasionById } from "@/lib/constants";
 
 interface Item {
@@ -44,8 +44,10 @@ export default function MyGiftsPage() {
   const [items, setItems] = useState<Item[] | null>(null);
 
   const load = useCallback(async () => {
-    const ids = getGiftIds();
-    if (ids.length === 0) {
+    const senderId = getSenderId();
+    // Fallback: legacy ids stored before sender_id system existed.
+    const legacyIds = getGiftIds();
+    if (!senderId && legacyIds.length === 0) {
       setItems([]);
       return;
     }
@@ -53,7 +55,10 @@ export default function MyGiftsPage() {
       const res = await fetch("/api/gifts/status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids }),
+        body: JSON.stringify({
+          sender_id: senderId || undefined,
+          ids: senderId ? [] : legacyIds,
+        }),
       });
       const data = await res.json();
       setItems(res.ok ? (data.items ?? []) : []);

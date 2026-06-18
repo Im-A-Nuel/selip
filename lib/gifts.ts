@@ -40,6 +40,8 @@ export interface Gift {
   unlock_at?: string;
   /** thank-you note left by the recipient after claiming */
   thanks_message?: string;
+  /** client-generated UUID identifying the sender's session/browser */
+  sender_id?: string;
   source_chain?: string;
   smart_account_addr?: string;
   funding_tx?: string;
@@ -60,6 +62,7 @@ export interface CreateGiftInput {
   recipient_email?: string;
   pin_hash?: string;
   unlock_at?: string;
+  sender_id?: string;
 }
 
 const SLUG_WORDS = [

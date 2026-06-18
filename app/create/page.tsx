@@ -22,7 +22,7 @@ import {
   type RuleTypeId,
   type SourceAssetId,
 } from "@/lib/constants";
-import { rememberGiftId } from "@/lib/myGifts";
+import { getSenderId, rememberGiftId } from "@/lib/myGifts";
 
 interface Draft {
   occasion: OccasionId;
@@ -158,6 +158,7 @@ export default function CreatePage() {
           unlock_at: draft.unlockAt
             ? new Date(draft.unlockAt).toISOString()
             : undefined,
+          sender_id: getSenderId(),
         }),
       });
       const created = await createRes.json();

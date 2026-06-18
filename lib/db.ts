@@ -12,6 +12,7 @@ export interface GiftRepo {
   getBySlug(slug: string): Promise<Gift | null>;
   update(id: string, patch: Partial<Gift>): Promise<Gift | null>;
   listByIds(ids: string[]): Promise<Gift[]>;
+  listBySenderId(senderId: string): Promise<Gift[]>;
 }
 
 // ---- In-memory fallback (dev / no-DB) -------------------------------------
@@ -67,6 +68,7 @@ class MemoryRepo implements GiftRepo {
       card_theme: input.card_theme,
       rule_type: input.rule_type,
       rule_param: input.rule_param,
+      sender_id: input.sender_id,
       status: "draft",
       created_at: new Date().toISOString(),
     };
@@ -96,6 +98,13 @@ class MemoryRepo implements GiftRepo {
     return ids
       .map((id) => this.store.get(id))
       .filter((g): g is Gift => Boolean(g));
+  }
+
+  async listBySenderId(senderId: string): Promise<Gift[]> {
+    const all = [...memState().store.values()];
+    return all
+      .filter((g) => g.sender_id === senderId)
+      .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
   }
 }
 
@@ -147,6 +156,7 @@ class SupabaseRepo implements GiftRepo {
         card_theme: input.card_theme,
         rule_type: input.rule_type,
         rule_param: input.rule_param ?? null,
+        sender_id: input.sender_id ?? null,
         status: "draft" as GiftStatus,
       })
       .select()
@@ -193,6 +203,18 @@ class SupabaseRepo implements GiftRepo {
     if (ids.length === 0) return [];
     const db = await this.client();
     const { data, error } = await db.from(TABLE).select().in("id", ids);
+    if (error) throw new Error(error.message);
+    return (data as Gift[]) ?? [];
+  }
+
+  async listBySenderId(senderId: string): Promise<Gift[]> {
+    const db = await this.client();
+    const { data, error } = await db
+      .from(TABLE)
+      .select()
+      .eq("sender_id", senderId)
+      .order("created_at", { ascending: false })
+      .limit(100);
     if (error) throw new Error(error.message);
     return (data as Gift[]) ?? [];
   }

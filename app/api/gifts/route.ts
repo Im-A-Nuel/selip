@@ -33,6 +33,11 @@ export async function POST(req: NextRequest) {
       ? await sha256Hex(body.pin)
       : undefined;
 
+  const senderId =
+    typeof body.sender_id === "string" && body.sender_id.length > 0
+      ? body.sender_id.slice(0, 64) // cap length, never trust client blindly
+      : undefined;
+
   const candidate: Partial<CreateGiftInput> = {
     occasion: body.occasion,
     occasion_label: body.occasion_label,
@@ -48,6 +53,7 @@ export async function POST(req: NextRequest) {
         : undefined,
     pin_hash,
     unlock_at: body.unlock_at || undefined,
+    sender_id: senderId,
   };
 
   const check = validateCreateInput(candidate);
