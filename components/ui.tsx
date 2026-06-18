@@ -86,7 +86,7 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full bg-white/70 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.04em] text-coral-600 ring-1 ring-coral-100 backdrop-blur ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.04em] text-coral-600 ring-1 ring-coral-200 shadow-sm ${className}`}
     >
       {children}
     </span>
