@@ -1,8 +1,5 @@
 "use client";
 
-// "My gifts" dashboard. Resolves the ids this device created (localStorage) to
-// their current status. No sender auth yet; this is a local convenience view.
-
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -18,9 +15,11 @@ interface Item {
   occasion_label: string;
   amount_display: string;
   status: string;
+  rule_type: string;
   protection: string;
   locked: boolean;
   thanks_message: string;
+  created_at: string | null;
 }
 
 const STATUS_STYLE: Record<string, string> = {
@@ -39,13 +38,26 @@ const STATUS_LABEL: Record<string, string> = {
   expired: "Expired",
 };
 
+function timeAgo(iso: string | null): string {
+  if (!iso) return "";
+  const diff = Date.now() - Date.parse(iso);
+  const mins = Math.floor(diff / 60000);
+  if (mins < 2) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return "1 day ago";
+  return `${days} days ago`;
+}
+
 export default function MyGiftsPage() {
   const toast = useToast();
   const [items, setItems] = useState<Item[] | null>(null);
+  const [refunding, setRefunding] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const senderId = getSenderId();
-    // Fallback: legacy ids stored before sender_id system existed.
     const legacyIds = getGiftIds();
     if (!senderId && legacyIds.length === 0) {
       setItems([]);
@@ -77,6 +89,24 @@ export default function MyGiftsPage() {
     toast("Link copied");
   }
 
+  async function requestRefund(id: string) {
+    setRefunding(id);
+    try {
+      const res = await fetch(`/api/gifts/${id}/refund`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        toast("Refund requested — funds return to your wallet");
+        await load();
+      } else {
+        toast(data?.error?.message ?? "Refund failed.");
+      }
+    } catch {
+      toast("Network hiccup.");
+    } finally {
+      setRefunding(null);
+    }
+  }
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 pb-10 pt-10">
       <div className="mb-6 flex items-center gap-3">
@@ -95,7 +125,7 @@ export default function MyGiftsPage() {
       {items === null ? (
         <div className="flex flex-col gap-3">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="shimmer h-20 rounded-3xl" />
+            <div key={i} className="shimmer h-24 rounded-3xl" />
           ))}
         </div>
       ) : items.length === 0 ? (
@@ -123,18 +153,25 @@ export default function MyGiftsPage() {
               g.occasion === "custom"
                 ? g.occasion_label || "Custom"
                 : o.label;
+            const statusLabel =
+              g.locked && g.status === "funded"
+                ? "Locked"
+                : (STATUS_LABEL[g.status] ?? g.status);
+            const canRefund =
+              g.status === "funded" && g.rule_type === "refund_if_unclaimed";
+
             return (
               <div key={g.id} className="glass rounded-3xl p-4">
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3">
                   <Image
                     src={o.icon}
                     alt=""
                     width={40}
                     height={40}
-                    className="h-10 w-10 shrink-0 object-contain"
+                    className="mt-0.5 h-10 w-10 shrink-0 object-contain"
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="truncate text-sm font-bold text-ink">
                         {label}
                       </span>
@@ -143,14 +180,17 @@ export default function MyGiftsPage() {
                           STATUS_STYLE[g.status] ?? "bg-ink/10 text-ink/60"
                         }`}
                       >
-                        {g.locked && g.status === "funded"
-                          ? "Locked"
-                          : (STATUS_LABEL[g.status] ?? g.status)}
+                        {statusLabel}
                       </span>
                     </div>
                     <span className="text-lg font-extrabold text-ink">
                       {g.amount_display}
                     </span>
+                    {g.created_at && g.status === "funded" && (
+                      <p className="mt-0.5 text-[11px] text-ink/40">
+                        Created {timeAgo(g.created_at)}
+                      </p>
+                    )}
                   </div>
                   <button
                     onClick={() => copyLink(g.claim_slug)}
@@ -159,10 +199,21 @@ export default function MyGiftsPage() {
                     Copy link
                   </button>
                 </div>
+
                 {g.thanks_message && (
                   <p className="mt-3 rounded-2xl bg-white/70 px-3 py-2 text-sm text-ink/80 ring-1 ring-black/5">
-                    💌 “{g.thanks_message}”
+                    💌 &ldquo;{g.thanks_message}&rdquo;
                   </p>
+                )}
+
+                {canRefund && (
+                  <button
+                    disabled={refunding === g.id}
+                    onClick={() => requestRefund(g.id)}
+                    className="mt-3 w-full rounded-2xl border border-red-200 bg-red-50 py-2.5 text-sm font-semibold text-red-600 transition-opacity hover:opacity-80 disabled:opacity-40"
+                  >
+                    {refunding === g.id ? "Requesting refund…" : "Refund — I changed my mind"}
+                  </button>
                 )}
               </div>
             );

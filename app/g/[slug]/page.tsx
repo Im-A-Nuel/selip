@@ -20,17 +20,18 @@ export async function generateMetadata({
     gift.occasion === "custom"
       ? gift.occasion_label?.trim() || "special"
       : occasionById(gift.occasion).label;
-  const title = `A ${label} gift for you 🎁`;
-  const description = "Open it with Google. No wallet needed. - Selip";
+  const title = `A ${label} gift for you`;
+  const description = `${gift.amount_display} — open it with Google. No wallet needed.`;
+  const ogImage = `/api/og/${slug}`;
   return {
     title,
     description,
-    openGraph: { title, description, type: "website", images: ["/og.png"] },
+    openGraph: { title, description, type: "website", images: [ogImage] },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ["/og.png"],
+      images: [ogImage],
     },
   };
 }

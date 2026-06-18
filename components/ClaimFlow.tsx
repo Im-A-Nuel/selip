@@ -58,6 +58,9 @@ export function ClaimFlow({
   const [email, setEmail] = useState("");
   const [gateError, setGateError] = useState<string | null>(null);
 
+  // cash-out destination
+  const [recipientAddr, setRecipientAddr] = useState("");
+
   // thank-you
   const [thanks, setThanks] = useState("");
   const [thanksSent, setThanksSent] = useState(false);
@@ -231,6 +234,21 @@ export function ClaimFlow({
               </button>
             ))}
           </div>
+          <label className="mt-3 block text-xs font-bold uppercase tracking-wide text-ink/50">
+            Your wallet address
+          </label>
+          <div className="mt-2 flex items-center rounded-xl bg-white/70 px-3 py-2.5 ring-1 ring-ink/5">
+            <input
+              value={recipientAddr}
+              onChange={(e) => setRecipientAddr(e.target.value)}
+              placeholder="0x… (auto-filled after sign-in)"
+              spellCheck={false}
+              className="w-full bg-transparent font-mono text-xs text-ink outline-none placeholder:text-ink/30"
+            />
+          </div>
+          <p className="mt-1.5 text-[11px] text-ink/40">
+            After sign-in, your address is filled automatically. Paste manually if you prefer a specific wallet.
+          </p>
         </div>
 
         <PillButton

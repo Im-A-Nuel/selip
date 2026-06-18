@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
       amount_display: g.amount_display,
       card_theme: g.card_theme,
       status: g.status,
+      rule_type: g.rule_type,
       protection: g.protection ?? "open",
       unlock_at: g.unlock_at ?? null,
       locked: isTimeLocked(g),
