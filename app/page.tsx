@@ -1,32 +1,33 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Badge, PillButton } from "@/components/ui";
-import { GiftCard } from "@/components/GiftCard";
+
+const STEPS = [
+  { art: "/art/how-create.webp", title: "Create", desc: "Pick an amount and a card" },
+  { art: "/art/how-share.webp", title: "Share", desc: "Send one simple link" },
+  { art: "/art/how-open.webp", title: "Open", desc: "They sign in with Google" },
+];
 
 export default function Home() {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 pb-10 pt-14">
-      {/* Floating preview cluster */}
-      <div className="relative mb-2 h-64">
-        <div className="absolute left-1/2 top-2 w-72 -translate-x-1/2">
-          <div className="float-slow [--rot:-5deg]">
-            <GiftCard
-              occasion="birthday"
-              amountDisplay="$50"
-              message="Happy birthday! Hope your day is wonderful."
-              theme="sunrise"
-            />
-          </div>
-        </div>
-        <div className="absolute right-2 top-0 soft float-slow flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold text-coral-600 [--rot:4deg]">
-          <span>🎉</span> Gift received
-        </div>
-        <div className="absolute left-1 top-44 soft float-slow flex items-center gap-2 rounded-2xl px-3 py-2 text-xs font-semibold text-ink/70 [--rot:-3deg]">
-          <span className="text-base">🔗</span> Just one link
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 pb-10 pt-10">
+      {/* Hero illustration */}
+      <div className="relative mx-auto w-full max-w-sm">
+        <div className="float-slow">
+          <Image
+            src="/art/hero.webp"
+            alt="Two hands passing a smiling gift"
+            width={1200}
+            height={500}
+            priority
+            sizes="(max-width: 480px) 90vw, 384px"
+            className="h-auto w-full"
+          />
         </div>
       </div>
 
       {/* Hero copy */}
-      <div className="rise-in mt-4 flex flex-col items-center text-center">
+      <div className="rise-in -mt-2 flex flex-col items-center text-center">
         <Badge>
           <span>✨</span> No wallet needed
         </Badge>
@@ -43,16 +44,28 @@ export default function Home() {
         </p>
       </div>
 
+      {/* How it works */}
+      <div className="mt-8 grid grid-cols-3 gap-3">
+        {STEPS.map((s) => (
+          <div
+            key={s.title}
+            className="soft flex flex-col items-center gap-1 rounded-3xl px-2 py-4 text-center"
+          >
+            <Image src={s.art} alt="" width={64} height={64} className="h-14 w-14 object-contain" />
+            <span className="mt-1 text-sm font-bold text-ink">{s.title}</span>
+            <span className="text-[11px] leading-tight text-ink/50">{s.desc}</span>
+          </div>
+        ))}
+      </div>
+
       {/* CTA */}
-      <div className="mt-auto flex flex-col items-center gap-3 pt-10">
+      <div className="mt-auto flex flex-col items-center gap-3 pt-8">
         <Link href="/create" className="w-full">
           <PillButton className="w-full py-4 text-base">
             Create a gift <span aria-hidden>→</span>
           </PillButton>
         </Link>
-        <p className="text-xs text-ink/40">
-          No seed phrase. Nothing to install.
-        </p>
+        <p className="text-xs text-ink/40">No seed phrase. Nothing to install.</p>
       </div>
     </main>
   );

@@ -17,6 +17,18 @@ export const metadata: Metadata = {
   title: "Selip - Slip someone a gift",
   description: "Slip someone a gift. No wallet needed.",
   appleWebApp: { capable: true, title: "Selip", statusBarStyle: "default" },
+  openGraph: {
+    title: "Selip - Slip someone a gift",
+    description: "Give a gift, as easy as a text. No wallet needed.",
+    type: "website",
+    images: ["/og.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Selip - Slip someone a gift",
+    description: "Give a gift, as easy as a text. No wallet needed.",
+    images: ["/og.png"],
+  },
 };
 
 export const viewport: Viewport = {

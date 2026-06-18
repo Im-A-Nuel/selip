@@ -6,6 +6,7 @@
 // and jargon-free, with a graceful path when SDK keys are not yet configured.
 
 import { useState } from "react";
+import Image from "next/image";
 import { GiftCard } from "@/components/GiftCard";
 import { Confetti } from "@/components/Confetti";
 import { Badge, PillButton } from "@/components/ui";
@@ -59,9 +60,14 @@ export function ClaimFlow({
     return (
       <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-6 px-6 py-10 text-center">
         <Confetti />
-        <Badge>
-          <span>🎉</span> Gift opened
-        </Badge>
+        <Image
+          src="/art/reveal.webp"
+          alt=""
+          width={160}
+          height={160}
+          priority
+          className="reveal-pop -mb-2 h-28 w-28 object-contain"
+        />
         <div className="reveal-pop">
           <GiftCard
             occasion={view.occasion}

@@ -1,11 +1,14 @@
-// Presentational gift card. No on-chain logic here (see /lib).
+// Presentational gift card. The background is the per-occasion illustration;
+// text overlays the clean top area. No on-chain logic here (see /lib).
 
-import { occasionById, themeById } from "@/lib/constants";
+import Image from "next/image";
+import { occasionById } from "@/lib/constants";
 
 export interface GiftCardProps {
   occasion: string;
   amountDisplay: string;
   message?: string;
+  /** kept for API compatibility; visual is driven by occasion art now */
   theme?: string;
   revealed?: boolean;
 }
@@ -14,62 +17,43 @@ export function GiftCard({
   occasion,
   amountDisplay,
   message,
-  theme = "sunrise",
   revealed = true,
 }: GiftCardProps) {
-  const t = themeById(theme);
   const o = occasionById(occasion);
   return (
-    <div
-      className="relative w-full max-w-sm overflow-hidden rounded-4xl p-7 text-white transition-[box-shadow] duration-500"
-      style={{
-        background: `linear-gradient(140deg, ${t.from} 0%, ${t.to} 100%)`,
-        boxShadow: `0 24px 60px -20px ${t.from}aa, inset 0 1px 0 rgba(255,255,255,0.25)`,
-      }}
-    >
-      {/* glossy sheen */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/20 blur-2xl"
+    <div className="relative aspect-[3/4] w-full max-w-sm overflow-hidden rounded-4xl shadow-xl shadow-coral-300/40 ring-1 ring-black/5">
+      <Image
+        src={o.art}
+        alt=""
+        fill
+        priority
+        sizes="(max-width: 480px) 90vw, 360px"
+        className="object-cover"
       />
-      {/* occasion watermark pattern */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-6 -left-3 select-none text-[7rem] leading-none opacity-10"
-      >
-        {o.emoji}
-      </div>
-      {/* dotted texture */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.12]"
-        style={{
-          backgroundImage:
-            "radial-gradient(rgba(255,255,255,0.9) 1px, transparent 1px)",
-          backgroundSize: "16px 16px",
-        }}
-      />
-      {/* stamp corner */}
-      <div className="absolute right-5 top-5 flex h-12 w-12 rotate-6 items-center justify-center rounded-2xl bg-white/20 text-2xl ring-1 ring-white/40 backdrop-blur">
-        {o.emoji}
-      </div>
+      {/* top scrim keeps text crisp over the illustration */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-2/5 bg-gradient-to-b from-white/75 via-white/35 to-transparent" />
 
-      <span className="text-xs font-bold uppercase tracking-widest text-white/85">
-        {o.label}
-      </span>
-      <p className="mt-10 text-sm font-medium text-white/80">For you</p>
-      <p className="mt-1 text-[2.6rem] font-extrabold leading-none tabular-nums drop-shadow-sm">
-        {revealed ? amountDisplay : "• • •"}
-      </p>
-      {message ? (
-        <p className="mt-5 border-t border-white/25 pt-4 text-sm leading-relaxed text-white/90">
-          {message}
-        </p>
-      ) : (
-        <div className="mt-5 border-t border-white/25 pt-4 text-sm text-white/70">
-          Selip
+      <div className="relative flex h-full flex-col p-6">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-ink/55">
+            {o.label}
+          </span>
+          <span className="text-xl drop-shadow-sm" aria-hidden>
+            {o.emoji}
+          </span>
         </div>
-      )}
+        <p className="mt-4 text-sm font-medium text-ink/45">For you</p>
+        <p className="mt-0.5 text-[2.6rem] font-extrabold leading-none text-ink">
+          {revealed ? amountDisplay : "• • •"}
+        </p>
+        {message ? (
+          <div className="mt-auto">
+            <p className="rounded-2xl bg-white/75 px-4 py-3 text-sm leading-relaxed text-ink/85 shadow-sm ring-1 ring-black/5 backdrop-blur">
+              {message}
+            </p>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

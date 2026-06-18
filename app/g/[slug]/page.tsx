@@ -2,6 +2,7 @@
 // off to the client ClaimFlow for login + reveal. Copy avoids crypto jargon.
 
 import type { Metadata } from "next";
+import Image from "next/image";
 import { getRepo } from "@/lib/db";
 import { toPublicView } from "@/lib/gifts";
 import { occasionById } from "@/lib/constants";
@@ -21,8 +22,13 @@ export async function generateMetadata({
   return {
     title,
     description,
-    openGraph: { title, description, type: "website" },
-    twitter: { card: "summary_large_image", title, description },
+    openGraph: { title, description, type: "website", images: ["/og.png"] },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/og.png"],
+    },
   };
 }
 
@@ -37,7 +43,7 @@ export default async function ClaimPage({
   if (!gift) {
     return (
       <Centered>
-        <span className="text-4xl">🤔</span>
+        <StateArt src="/art/state-notfound.webp" />
         <h1 className="text-2xl font-extrabold text-ink">Gift not found</h1>
         <p className="text-sm text-ink/60">
           The link may be mistyped or no longer valid.
@@ -49,7 +55,7 @@ export default async function ClaimPage({
   if (gift.status === "claimed") {
     return (
       <Centered>
-        <span className="text-4xl">🎉</span>
+        <StateArt src="/art/state-opened.webp" />
         <h1 className="text-2xl font-extrabold text-ink">
           This gift is already opened
         </h1>
@@ -61,7 +67,7 @@ export default async function ClaimPage({
   if (gift.status === "expired" || gift.status === "refunded") {
     return (
       <Centered>
-        <span className="text-4xl">⌛</span>
+        <StateArt src="/art/state-expired.webp" />
         <h1 className="text-2xl font-extrabold text-ink">
           This gift has expired
         </h1>
@@ -75,9 +81,22 @@ export default async function ClaimPage({
   return <ClaimFlow giftId={gift.id} view={toPublicView(gift)} />;
 }
 
+function StateArt({ src }: { src: string }) {
+  return (
+    <Image
+      src={src}
+      alt=""
+      width={200}
+      height={200}
+      priority
+      className="rise-in h-40 w-40 object-contain"
+    />
+  );
+}
+
 function Centered({ children }: { children: React.ReactNode }) {
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
       {children}
     </main>
   );

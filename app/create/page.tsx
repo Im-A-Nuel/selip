@@ -1,15 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { GiftCard } from "@/components/GiftCard";
 import { Stepper } from "@/components/Stepper";
 import { Confetti } from "@/components/Confetti";
-import { Badge, Chip, PillButton } from "@/components/ui";
+import { Chip, PillButton } from "@/components/ui";
 import { ShareButton } from "@/components/ShareButton";
 import { useToast } from "@/components/Toast";
 import {
-  CARD_THEMES,
   CURRENCY,
   OCCASIONS,
   RULE_TYPES,
@@ -28,7 +28,7 @@ interface Draft {
   rule: RuleTypeId;
 }
 
-const STEPS = ["Occasion", "Amount", "Message", "Theme", "Rule", "Fund"];
+const STEPS = ["Occasion", "Amount", "Message", "Rule", "Fund"];
 const QUICK_AMOUNTS = [10, 25, 50, 100];
 
 export default function CreatePage() {
@@ -164,9 +164,14 @@ export default function CreatePage() {
     return (
       <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-6 px-6 py-10 text-center">
         <Confetti />
-        <Badge>
-          <span>🎉</span> Ready to share
-        </Badge>
+        <Image
+          src="/art/success.webp"
+          alt=""
+          width={150}
+          height={150}
+          priority
+          className="reveal-pop -mb-2 h-24 w-24 object-contain"
+        />
         <div className="reveal-pop">
           <GiftCard
             occasion={draft.occasion}
@@ -310,29 +315,6 @@ export default function CreatePage() {
         )}
 
         {step === 3 && (
-          <Field label="Pick a card theme">
-            <div className="stagger grid grid-cols-2 gap-3">
-              {CARD_THEMES.map((t, i) => (
-                <Tile
-                  key={t.id}
-                  index={i}
-                  active={draft.theme === t.id}
-                  onClick={() => setDraft({ ...draft, theme: t.id })}
-                >
-                  <span
-                    className="h-9 w-9 rounded-full ring-2 ring-white"
-                    style={{
-                      background: `linear-gradient(135deg, ${t.from}, ${t.to})`,
-                    }}
-                  />
-                  <span className="text-sm font-semibold">{t.label}</span>
-                </Tile>
-              ))}
-            </div>
-          </Field>
-        )}
-
-        {step === 4 && (
           <Field label="Gift rule">
             <div className="flex flex-col gap-2.5">
               {RULE_TYPES.map((r) => (
@@ -358,10 +340,19 @@ export default function CreatePage() {
                 </button>
               ))}
             </div>
-            <p className="mt-3 text-xs leading-relaxed text-ink/50">
-              The rule is enforced by code, not by us. If it is never opened, the
-              gift returns to you on its own.
-            </p>
+            <div className="mt-3 flex items-center gap-3 rounded-2xl bg-white/55 p-3 ring-1 ring-black/5">
+              <Image
+                src="/art/trust.webp"
+                alt=""
+                width={44}
+                height={44}
+                className="shrink-0"
+              />
+              <p className="text-xs leading-relaxed text-ink/60">
+                Enforced by code, not by us. If it is never opened, the gift
+                returns to you on its own.
+              </p>
+            </div>
           </Field>
         )}
 
