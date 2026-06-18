@@ -38,6 +38,14 @@ body {
   border-radius: 0.75rem;
 }
 
+/* Text fields show focus via their .glass wrapper (:focus-within), so skip the
+   global ring on them to avoid a nested double outline. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  box-shadow: none;
+}
+
 button,
 a {
   -webkit-tap-highlight-color: transparent;
