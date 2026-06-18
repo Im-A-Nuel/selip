@@ -44,14 +44,27 @@ export default function Home() {
 
       {/* How it works */}
       <div className="mt-8 grid grid-cols-3 gap-3">
-        {STEPS.map((s) => (
+        {STEPS.map((s, i) => (
           <div
             key={s.title}
-            className="soft flex flex-col items-center gap-1 rounded-3xl px-2 py-4 text-center"
+            style={{ "--i": i } as React.CSSProperties}
+            className="soft overflow-hidden rounded-3xl pb-3 text-center"
           >
-            <Image src={s.art} alt="" width={64} height={64} className="h-14 w-14 object-contain" />
-            <span className="mt-1 text-sm font-bold text-ink">{s.title}</span>
-            <span className="text-[11px] leading-tight text-ink/50">{s.desc}</span>
+            <div className="relative aspect-square w-full overflow-hidden">
+              <Image
+                src={s.art}
+                alt=""
+                fill
+                sizes="120px"
+                className="object-cover"
+              />
+            </div>
+            <span className="mt-2 block text-sm font-bold text-ink">
+              {s.title}
+            </span>
+            <span className="mt-0.5 block px-1.5 text-[11px] leading-tight text-ink/50">
+              {s.desc}
+            </span>
           </div>
         ))}
       </div>
