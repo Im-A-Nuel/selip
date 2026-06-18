@@ -447,9 +447,9 @@ export default function CreatePage() {
                   <Image
                     src={p.icon}
                     alt=""
-                    width={64}
-                    height={64}
-                    className="h-16 w-16 shrink-0 object-contain drop-shadow-sm"
+                    width={88}
+                    height={88}
+                    className="h-20 w-20 shrink-0 object-contain drop-shadow-sm"
                   />
                   <span>
                     <span className="block text-sm font-bold">{p.label}</span>
