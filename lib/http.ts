@@ -21,5 +21,8 @@ export const ERRORS = {
     fail("GIFT_ALREADY_CLAIMED", "This gift is already opened.", 409),
   GONE: () =>
     fail("GIFT_GONE", "This gift is already opened or expired.", 410),
+  FORBIDDEN: (m = "You can't open this gift.") =>
+    fail("FORBIDDEN", m, 403),
+  LOCKED: (m = "This gift is not unlocked yet.") => fail("LOCKED", m, 423),
   SERVER: (m = "Something went wrong.") => fail("SERVER_ERROR", m, 500),
 } as const;

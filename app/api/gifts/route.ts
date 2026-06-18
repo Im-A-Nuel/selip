@@ -2,7 +2,13 @@
 
 import type { NextRequest } from "next/server";
 import { getRepo } from "@/lib/db";
-import { generateSlug, validateCreateInput } from "@/lib/gifts";
+import {
+  generateSlug,
+  normalizeEmail,
+  validateCreateInput,
+  type CreateGiftInput,
+} from "@/lib/gifts";
+import { sha256Hex } from "@/lib/hash";
 import { ERRORS, ok } from "@/lib/http";
 
 function randomInt(max: number): number {
@@ -17,10 +23,34 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return ERRORS.INVALID_INPUT("Body bukan JSON valid.");
+    return ERRORS.INVALID_INPUT("Invalid JSON body.");
   }
 
-  const check = validateCreateInput(body);
+  const protection = body.protection ?? "open";
+  // Hash the secret before it touches storage; validate the hashed shape.
+  const pin_hash =
+    protection === "pin" && typeof body.pin === "string" && body.pin.length > 0
+      ? await sha256Hex(body.pin)
+      : undefined;
+
+  const candidate: Partial<CreateGiftInput> = {
+    occasion: body.occasion,
+    occasion_label: body.occasion_label,
+    amount_display: body.amount_display,
+    message: body.message,
+    card_theme: body.card_theme,
+    rule_type: body.rule_type,
+    rule_param: body.rule_param,
+    protection,
+    recipient_email:
+      protection === "email" && body.recipient_email
+        ? normalizeEmail(body.recipient_email)
+        : undefined,
+    pin_hash,
+    unlock_at: body.unlock_at || undefined,
+  };
+
+  const check = validateCreateInput(candidate);
   if (!check.ok) return ERRORS.INVALID_INPUT(check.error);
 
   try {
@@ -31,21 +61,10 @@ export async function POST(req: NextRequest) {
       const slug = generateSlug(randomInt);
       const existing = await repo.getBySlug(slug);
       if (!existing) {
-        gift = await repo.create(
-          {
-            occasion: body.occasion,
-            occasion_label: body.occasion_label,
-            amount_display: body.amount_display,
-            message: body.message,
-            card_theme: body.card_theme,
-            rule_type: body.rule_type,
-            rule_param: body.rule_param,
-          },
-          slug,
-        );
+        gift = await repo.create(candidate as CreateGiftInput, slug);
       }
     }
-    if (!gift) return ERRORS.SERVER("Gagal membuat slug unik.");
+    if (!gift) return ERRORS.SERVER("Could not generate a unique slug.");
     return ok(
       { id: gift.id, claim_slug: gift.claim_slug, status: gift.status },
       201,

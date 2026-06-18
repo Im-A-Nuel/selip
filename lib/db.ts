@@ -11,6 +11,7 @@ export interface GiftRepo {
   getById(id: string): Promise<Gift | null>;
   getBySlug(slug: string): Promise<Gift | null>;
   update(id: string, patch: Partial<Gift>): Promise<Gift | null>;
+  listByIds(ids: string[]): Promise<Gift[]>;
 }
 
 // ---- In-memory fallback (dev / no-DB) -------------------------------------
@@ -57,6 +58,10 @@ class MemoryRepo implements GiftRepo {
       claim_slug: slug,
       occasion: input.occasion,
       occasion_label: input.occasion_label,
+      protection: input.protection ?? "open",
+      recipient_email: input.recipient_email,
+      pin_hash: input.pin_hash,
+      unlock_at: input.unlock_at,
       amount_display: input.amount_display,
       message: input.message,
       card_theme: input.card_theme,
@@ -85,6 +90,12 @@ class MemoryRepo implements GiftRepo {
     const next = { ...existing, ...patch };
     this.store.set(id, next);
     return next;
+  }
+
+  async listByIds(ids: string[]): Promise<Gift[]> {
+    return ids
+      .map((id) => this.store.get(id))
+      .filter((g): g is Gift => Boolean(g));
   }
 }
 
@@ -127,6 +138,10 @@ class SupabaseRepo implements GiftRepo {
         claim_slug: slug,
         occasion: input.occasion,
         occasion_label: input.occasion_label ?? null,
+        protection: input.protection ?? "open",
+        recipient_email: input.recipient_email ?? null,
+        pin_hash: input.pin_hash ?? null,
+        unlock_at: input.unlock_at ?? null,
         amount_display: input.amount_display,
         message: input.message ?? null,
         card_theme: input.card_theme,
@@ -172,6 +187,14 @@ class SupabaseRepo implements GiftRepo {
       .maybeSingle();
     if (error) throw new Error(error.message);
     return (data as Gift) ?? null;
+  }
+
+  async listByIds(ids: string[]): Promise<Gift[]> {
+    if (ids.length === 0) return [];
+    const db = await this.client();
+    const { data, error } = await db.from(TABLE).select().in("id", ids);
+    if (error) throw new Error(error.message);
+    return (data as Gift[]) ?? [];
   }
 }
 

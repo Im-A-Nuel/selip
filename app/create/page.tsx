@@ -13,13 +13,16 @@ import { useToast } from "@/components/Toast";
 import {
   CURRENCY,
   OCCASIONS,
+  PROTECTION_OPTIONS,
   RULE_TYPES,
   SOURCE_ASSETS,
   type CardThemeId,
   type OccasionId,
+  type ProtectionId,
   type RuleTypeId,
   type SourceAssetId,
 } from "@/lib/constants";
+import { rememberGiftId } from "@/lib/myGifts";
 
 interface Draft {
   occasion: OccasionId;
@@ -28,9 +31,13 @@ interface Draft {
   message: string;
   theme: CardThemeId;
   rule: RuleTypeId;
+  protection: ProtectionId;
+  recipientEmail: string;
+  pin: string;
+  unlockAt: string;
 }
 
-const STEPS = ["Occasion", "Amount", "Message", "Rule", "Fund"];
+const STEPS = ["Occasion", "Amount", "Message", "Rule", "Protect", "Fund"];
 const QUICK_AMOUNTS = [10, 25, 50, 100];
 
 export default function CreatePage() {
@@ -43,6 +50,10 @@ export default function CreatePage() {
     message: "",
     theme: "sunrise",
     rule: "refund_if_unclaimed",
+    protection: "open",
+    recipientEmail: "",
+    pin: "",
+    unlockAt: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [claimUrl, setClaimUrl] = useState<string | null>(null);
@@ -77,6 +88,19 @@ export default function CreatePage() {
     if (step === 1 && !draft.amount.trim()) {
       setError("Enter an amount first.");
       return;
+    }
+    if (step === 4) {
+      if (
+        draft.protection === "email" &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.recipientEmail.trim())
+      ) {
+        setError("Enter a valid recipient email.");
+        return;
+      }
+      if (draft.protection === "pin" && draft.pin.trim().length < 4) {
+        setError("Use a code of at least 4 characters.");
+        return;
+      }
     }
     setDir(1);
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
@@ -125,6 +149,15 @@ export default function CreatePage() {
           message: draft.message || undefined,
           card_theme: draft.theme,
           rule_type: draft.rule,
+          protection: draft.protection,
+          recipient_email:
+            draft.protection === "email"
+              ? draft.recipientEmail.trim()
+              : undefined,
+          pin: draft.protection === "pin" ? draft.pin.trim() : undefined,
+          unlock_at: draft.unlockAt
+            ? new Date(draft.unlockAt).toISOString()
+            : undefined,
         }),
       });
       const created = await createRes.json();
@@ -132,6 +165,8 @@ export default function CreatePage() {
         setError(created?.error?.message ?? "Could not create the gift.");
         return;
       }
+      // Track locally so the sender's "My gifts" page can show it.
+      rememberGiftId(created.id);
 
       const asset = SOURCE_ASSETS.find((a) => a.id === source);
       const fundRes = await fetch(`/api/gifts/${created.id}/fund`, {
@@ -385,6 +420,86 @@ export default function CreatePage() {
                 returns to you on its own.
               </p>
             </div>
+          </Field>
+        )}
+
+        {step === 4 && (
+          <Field label="Who can open it?">
+            <div className="flex flex-col gap-2.5">
+              {PROTECTION_OPTIONS.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setDraft({ ...draft, protection: p.id })}
+                  className={`flex items-start gap-3 rounded-2xl px-4 py-3.5 text-left transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.98] ${
+                    draft.protection === p.id
+                      ? "bg-ink text-white shadow-lg shadow-ink/20"
+                      : "glass text-ink/80 hover:-translate-y-0.5"
+                  }`}
+                >
+                  <span className="text-xl leading-none">{p.icon}</span>
+                  <span>
+                    <span className="block text-sm font-bold">{p.label}</span>
+                    <span
+                      className={`block text-xs leading-snug ${
+                        draft.protection === p.id ? "text-white/70" : "text-ink/50"
+                      }`}
+                    >
+                      {p.desc}
+                    </span>
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {draft.protection === "email" && (
+              <div className="glass rise-in flex items-center rounded-2xl px-4 py-3">
+                <input
+                  type="email"
+                  inputMode="email"
+                  value={draft.recipientEmail}
+                  onChange={(e) =>
+                    setDraft({ ...draft, recipientEmail: e.target.value })
+                  }
+                  placeholder="recipient@email.com"
+                  className="w-full bg-transparent text-ink outline-none placeholder:text-ink/30"
+                />
+              </div>
+            )}
+            {draft.protection === "pin" && (
+              <div className="glass rise-in flex items-center rounded-2xl px-4 py-3">
+                <input
+                  value={draft.pin}
+                  maxLength={20}
+                  onChange={(e) => setDraft({ ...draft, pin: e.target.value })}
+                  placeholder="Secret code (share it separately)"
+                  className="w-full bg-transparent text-ink outline-none placeholder:text-ink/30"
+                />
+              </div>
+            )}
+
+            <label className="mt-1 flex flex-col gap-2">
+              <span className="text-xs font-bold uppercase tracking-wide text-ink/45">
+                Unlock date (optional)
+              </span>
+              <div className="glass flex items-center rounded-2xl px-4 py-3">
+                <input
+                  type="datetime-local"
+                  value={draft.unlockAt}
+                  onChange={(e) =>
+                    setDraft({ ...draft, unlockAt: e.target.value })
+                  }
+                  className="w-full bg-transparent text-ink outline-none"
+                />
+              </div>
+              {draft.unlockAt && (
+                <button
+                  onClick={() => setDraft({ ...draft, unlockAt: "" })}
+                  className="self-start text-xs font-semibold text-coral-600"
+                >
+                  Clear date
+                </button>
+              )}
+            </label>
           </Field>
         )}
 

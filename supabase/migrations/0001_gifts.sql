@@ -15,6 +15,12 @@ create table if not exists public.gifts (
   rule_param         jsonb,
   status             text not null default 'draft'
                        check (status in ('draft','funded','claimed','refunded','expired')),
+  protection         text not null default 'open'
+                       check (protection in ('open','email','pin')),
+  recipient_email    text,
+  pin_hash           text,
+  unlock_at          timestamptz,
+  thanks_message     text,
   source_chain       text,
   smart_account_addr text,
   funding_tx         text,

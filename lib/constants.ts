@@ -25,6 +25,39 @@ export const CARD_THEMES = [
 
 export type CardThemeId = (typeof CARD_THEMES)[number]["id"];
 
+// Who can open the gift.
+export const PROTECTION_OPTIONS = [
+  {
+    id: "open",
+    label: "Anyone with the link",
+    desc: "Simplest. Whoever opens the link can claim.",
+    icon: "🔗",
+  },
+  {
+    id: "email",
+    label: "Only their email",
+    desc: "Lock to one email address. Safest if the link leaks.",
+    icon: "✉️",
+  },
+  {
+    id: "pin",
+    label: "Secret code",
+    desc: "Share a code separately. Needed to open.",
+    icon: "🔒",
+  },
+] as const;
+
+export type ProtectionId = (typeof PROTECTION_OPTIONS)[number]["id"];
+
+// Sign-in methods offered to the recipient.
+export const LOGIN_METHODS = [
+  { id: "google", label: "Continue with Google", icon: "G" },
+  { id: "apple", label: "Continue with Apple", icon: "" },
+  { id: "email", label: "Use email instead", icon: "✉️" },
+] as const;
+
+export type LoginMethodId = (typeof LOGIN_METHODS)[number]["id"];
+
 export const RULE_TYPES = [
   { id: "refund_if_unclaimed", label: "Auto-return if unopened" },
   { id: "unlock_on_date", label: "Unlock on a date" },
