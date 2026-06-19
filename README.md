@@ -1,68 +1,144 @@
 # Selip
 
-Slip someone a gift. No wallet needed.
+**Slip someone a gift. No wallet needed.**
 
-## Overview
+Selip lets anyone send a crypto gift to someone who has never touched crypto. The sender picks an amount and a card, funds it from any asset on any chain, and shares one link. The recipient opens the link, signs in with Google, and the gift is there. No seed phrase. No app to install. No wallet jargon.
 
-Selip adalah aplikasi pengiriman hadiah uang lintas chain untuk orang yang tidak mengerti crypto. Pengirim membuat kado, mendanainya dari aset apa pun di chain mana pun, dan membagikan satu link. Penerima membuka link, login dengan Google, dan hadiahnya langsung ada. Mereka tidak pernah melihat seed phrase, tidak menginstal apa pun, dan tidak perlu tahu ada blockchain di baliknya.
+Built solo for **UXmaxx Hackathon, General Track** (6 weeks).
 
-Masalah yang diselesaikan: mengirim nilai ke orang yang belum punya wallet itu mustahil mulus di Web3 hari ini. Selip menyembunyikan seluruh kompleksitas (wallet, gas, chain, bridging) di balik metafora yang sudah dipahami semua orang: memberi kado. Yang membuat Selip tidak bisa ditiru aplikasi Web2 biasa adalah dua hal: penggabungan aset lintas chain dalam satu kado (pooling) dan aturan kado yang dijamin kode (trustless conditions), bukan sekadar transfer.
+---
 
-Target user: pengirim adalah orang yang punya aset crypto dan ingin memberi hadiah; penerima adalah siapa pun, termasuk yang sama sekali belum pernah menyentuh crypto. Konteks: dibangun untuk UXmaxx Hackathon (6 minggu, solo builder), menargetkan General Track plus bonus Magic, Arbitrum, dan subtrack ZeroDev.
+## The problem
 
-## Tech Stack
+Sending value to someone without a wallet is hard in Web3 today. Selip hides the entire complexity -- wallets, gas, chains, bridging -- behind a gift metaphor everyone already understands.
 
-| Layer | Pilihan |
+What separates Selip from a Web2 transfer app:
+- **Cross-chain pooling** -- fund a gift from any asset on any chain in one step (Particle Universal Accounts)
+- **Trustless rules** -- refund conditions are enforced by smart contract, not a backend promise
+- **Walletless claim** -- recipient's EOA is upgraded to a Universal Account on-the-fly via EIP-7702 at first claim
+
+---
+
+## Tech stack
+
+| Layer | Choice |
 |---|---|
-| Frontend | Next.js (App Router) + TypeScript + Tailwind |
-| Onboarding / wallet | Magic embedded wallet (login Google/email) |
-| Chain abstraction | Particle Network Universal Accounts SDK (EIP-7702 mode) |
-| Programmable rules | ZeroDev (session keys / permissions) |
+| Frontend | Next.js 15 (App Router) + TypeScript + Tailwind |
+| Embedded wallet / onboarding | Magic (Google, Apple, email OTP) |
+| Chain abstraction | Particle Network Universal Accounts SDK (EIP-7702, V2) |
+| Programmable gift rules | ZeroDev (session keys / permissions) |
 | Settlement chain | Arbitrum |
-| Backend | Next.js API routes + lightweight DB (Postgres via Supabase) |
+| Database | Supabase (Postgres) -- gift metadata only, non-custodial |
+| Contracts | Solidity + Foundry (GiftEscrow.sol) |
 | Hosting | Vercel |
 
-## Quick Start
+---
+
+## Quick start
 
 ```bash
-git clone <repo-url> selip
+git clone https://github.com/Im-A-Nuel/selip.git
 cd selip
 pnpm install
-cp .env.example .env.local   # isi kunci Particle, Magic, ZeroDev, RPC Arbitrum
+cp .env.example .env.local   # fill Particle, Magic, ZeroDev, Supabase keys
 pnpm dev
 ```
 
-Tanpa kunci pun app tetap jalan: API memakai penyimpanan in-memory dan alur
-klaim memutar mode demo, jadi UI bisa diuji end-to-end secara lokal.
+The app runs fully in **demo mode without any keys** -- the API falls back to an in-memory store and the claim flow simulates every step end-to-end. Perfect for local UI review.
 
-### Contracts (Foundry, via WSL)
+### Environment variables
+
+```env
+# Particle Network
+NEXT_PUBLIC_PARTICLE_PROJECT_ID=
+NEXT_PUBLIC_PARTICLE_CLIENT_KEY=
+NEXT_PUBLIC_PARTICLE_APP_ID=
+
+# Magic
+NEXT_PUBLIC_MAGIC_API_KEY=
+
+# ZeroDev
+NEXT_PUBLIC_ZERODEV_PROJECT_ID=
+
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Arbitrum RPC (public fallback works for read-only)
+NEXT_PUBLIC_ARB_RPC=https://arb1.arbitrum.io/rpc
+```
+
+### Supabase migrations
+
+```bash
+supabase db push   # runs supabase/migrations/* in order
+```
+
+### Smart contracts (Foundry, via WSL)
 
 ```bash
 cd contracts
-forge install foundry-rs/forge-std   # vendor lib (di-gitignore)
-forge test                           # 7 test GiftEscrow
+forge install foundry-rs/forge-std
+forge test                    # 7/7 passing
 forge script script/Deploy.s.sol --rpc-url arbitrum_sepolia --broadcast
 ```
 
-## Project Structure
+---
+
+## Project structure
 
 ```
-selip/
-  app/              # Next.js routes (sender flow, claim flow, api)
-  components/       # UI components (gift card, steppers, reveal animation)
-  lib/              # integrasi SDK: particle.ts, magic.ts, zerodev.ts, db.ts
-  contracts/        # smart account rule logic + deploy scripts
-  docs/             # dokumen proyek ini
+app/
+  create/         gift creation wizard (6 steps)
+  g/[slug]/       recipient claim page
+  gifts/          sender dashboard (per-device history)
+  api/gifts/      REST: create, status, claim, refund, thanks
+  api/og/[slug]/  dynamic OpenGraph image per gift
+
+components/
+  ClaimFlow.tsx   walletless open flow (login -> gate -> reveal)
+  GiftCard.tsx    animated gift card with occasion art
+  Confetti.tsx    confetti burst on reveal
+
+lib/
+  particle.ts     Universal Accounts SDK wrapper
+  magic.ts        embedded wallet login wrapper
+  zerodev.ts      session key + permission wrapper
+  db.ts           Supabase repo + in-memory fallback
+
+contracts/
+  GiftEscrow.sol  escrow + refund rules (Foundry)
 ```
 
-## Features (MVP)
+---
 
-- Buat kado: pilih okasi, nominal, pesan, tema kartu
-- Danai kado dari aset apa pun lintas chain (Universal Accounts)
-- Satu aturan terprogram aktif (refund otomatis jika tidak diklaim)
-- Klaim walletless: login Google, EOA di-upgrade jadi UA via 7702 saat klaim
-- Klaim lintas chain: penerima cairkan ke chain/aset pilihannya
+## Core user flows
+
+**Sender**
+1. Pick occasion, amount, personal message, card theme
+2. Set a programmable rule (refund if unclaimed by date)
+3. Optionally protect with a PIN or recipient email
+4. Fund from any asset (USDC on Base, ETH on Arbitrum, etc.)
+5. Share the link via WhatsApp or any channel
+
+**Recipient**
+1. Open link, see a floating gift card with personalized greeting
+2. Sign in with Google (one tap, Magic embedded wallet)
+3. If protected: enter PIN or confirm email
+4. Card flips open with 3D animation + confetti
+5. Choose destination chain and cash out
+
+---
+
+## Architecture notes
+
+- Gift value and rules live in the **smart account**, not the database. Database stores metadata only.
+- Refund rules are enforced at **contract level** (ZeroDev permissions), not the backend. This is the key Web3 differentiator.
+- Recipient EOA is upgraded to a Universal Account **on-the-fly at first claim** via EIP-7702, not pre-deployed.
+- Cross-chain routing (funding and withdrawal) is handled by **Particle Universal Accounts SDK**, not the GiftEscrow contract.
+
+---
 
 ## License
 
-MIT. Pembuat memegang penuh hak IP (sesuai aturan hackathon).
+MIT. Builder retains full IP rights (per hackathon rules).

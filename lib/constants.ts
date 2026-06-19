@@ -79,10 +79,10 @@ export const DEST_CHAINS = [
 // converts any of these into the gift escrow on Arbitrum. Balances here are
 // placeholders for the demo flow; real balances come from the SDK once wired.
 export const SOURCE_ASSETS = [
-  { id: "usdc-base", token: "USDC", chain: "Base", balance: 320.5 },
-  { id: "eth-arb", token: "ETH", chain: "Arbitrum", balance: 0.18 },
-  { id: "usdc-op", token: "USDC", chain: "Optimism", balance: 75.0 },
-  { id: "usdc-poly", token: "USDC", chain: "Polygon", balance: 210.0 },
+  { id: "usdc-base", token: "USDC", chain: "Base", balance: 247.83 },
+  { id: "eth-arb", token: "ETH", chain: "Arbitrum", balance: 0.0412 },
+  { id: "usdc-op", token: "USDC", chain: "Optimism", balance: 89.14 },
+  { id: "usdc-poly", token: "USDC", chain: "Polygon", balance: 156.92 },
 ] as const;
 
 export type SourceAssetId = (typeof SOURCE_ASSETS)[number]["id"];

@@ -56,6 +56,18 @@ export default async function ClaimPage({
     );
   }
 
+  if (gift.status === "draft") {
+    return (
+      <Centered>
+        <StateArt src="/art/loading.webp" />
+        <h1 className="text-2xl font-extrabold text-ink">Almost ready</h1>
+        <p className="text-sm text-ink/60">
+          This gift is being prepared by the sender. Check back in a moment once they've funded it.
+        </p>
+      </Centered>
+    );
+  }
+
   if (gift.status === "claimed") {
     return (
       <Centered>

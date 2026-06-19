@@ -86,6 +86,16 @@ export default function Home() {
         </Link>
         <p className="text-xs text-ink/40">No seed phrase. Nothing to install.</p>
       </div>
+
+      {/* Footer */}
+      <footer className="mt-10 flex flex-col items-center gap-1 border-t border-ink/5 pt-6 text-center">
+        <p className="text-xs font-semibold text-ink/30">
+          Built for UXmaxx Hackathon · 2025
+        </p>
+        <p className="text-[11px] text-ink/20">
+          Powered by Particle Network · Magic · ZeroDev · Arbitrum
+        </p>
+      </footer>
     </main>
   );
 }

@@ -147,13 +147,14 @@ export default function MyGiftsPage() {
           <p className="text-xs text-ink/35">No wallet needed on either side.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          {items.map((g) => {
+        <div className="stagger flex flex-col gap-3">
+          {items.map((g, idx) => {
             const o = occasionById(g.occasion);
             const label =
               g.occasion === "custom"
                 ? g.occasion_label || "Custom"
                 : o.label;
+            const isWaiting = g.status === "funded" && !g.locked;
             const statusLabel =
               g.locked && g.status === "funded"
                 ? "Locked"
@@ -162,7 +163,7 @@ export default function MyGiftsPage() {
               g.status === "funded" && g.rule_type === "refund_if_unclaimed";
 
             return (
-              <div key={g.id} className="glass rounded-3xl p-4">
+              <div key={g.id} style={{ "--i": idx } as React.CSSProperties} className="glass rounded-3xl p-4">
                 <div className="flex items-start gap-3">
                   <Image
                     src={o.icon}
@@ -179,7 +180,7 @@ export default function MyGiftsPage() {
                       <span
                         className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${
                           STATUS_STYLE[g.status] ?? "bg-ink/10 text-ink/60"
-                        }`}
+                        } ${isWaiting ? "animate-pulse" : ""}`}
                       >
                         {statusLabel}
                       </span>
