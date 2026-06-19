@@ -9,7 +9,7 @@
 
 import type { NextRequest } from "next/server";
 import { getRepo } from "@/lib/db";
-import { isTimeLocked } from "@/lib/gifts";
+import { isExpired, isTimeLocked } from "@/lib/gifts";
 import { ERRORS, ok } from "@/lib/http";
 
 export async function POST(req: NextRequest) {
@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
       protection: g.protection ?? "open",
       unlock_at: g.unlock_at ?? null,
       locked: isTimeLocked(g),
+      expired: isExpired(g),
       thanks_message: g.thanks_message ?? "",
       created_at: g.created_at ?? null,
     }));

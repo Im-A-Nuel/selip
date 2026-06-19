@@ -43,10 +43,16 @@ export async function POST(req: NextRequest) {
       ? body.recipient_name.trim().slice(0, 40)
       : undefined;
 
+  const amountValue =
+    typeof body.amount_value === "number" && Number.isFinite(body.amount_value)
+      ? body.amount_value
+      : undefined;
+
   const candidate: Partial<CreateGiftInput> = {
     occasion: body.occasion,
     occasion_label: body.occasion_label,
     amount_display: body.amount_display,
+    amount_value: amountValue,
     message: body.message,
     card_theme: body.card_theme,
     rule_type: body.rule_type,

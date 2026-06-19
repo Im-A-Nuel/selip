@@ -24,5 +24,7 @@ export const ERRORS = {
   FORBIDDEN: (m = "You can't open this gift.") =>
     fail("FORBIDDEN", m, 403),
   LOCKED: (m = "This gift is not unlocked yet.") => fail("LOCKED", m, 423),
+  TOO_MANY: (m = "Too many attempts. Try again later.") =>
+    fail("TOO_MANY_ATTEMPTS", m, 429),
   SERVER: (m = "Something went wrong.") => fail("SERVER_ERROR", m, 500),
 } as const;

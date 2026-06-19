@@ -88,9 +88,16 @@ export default function CreatePage() {
       setError("Name your custom occasion.");
       return;
     }
-    if (step === 1 && !draft.amount.trim()) {
-      setError("Enter an amount first.");
-      return;
+    if (step === 1) {
+      const amt = Number(draft.amount);
+      if (!draft.amount.trim() || !Number.isFinite(amt) || amt <= 0) {
+        setError("Enter an amount greater than zero.");
+        return;
+      }
+      if (amt > 1_000_000) {
+        setError("That amount is too large.");
+        return;
+      }
     }
     if (step === 4) {
       if (
@@ -149,6 +156,7 @@ export default function CreatePage() {
           occasion_label:
             draft.occasion === "custom" ? draft.customLabel.trim() : undefined,
           amount_display: amountDisplay,
+          amount_value: Number(draft.amount) || undefined,
           message: draft.message || undefined,
           card_theme: draft.theme,
           rule_type: draft.rule,

@@ -4,8 +4,13 @@
 
 import type { NextRequest } from "next/server";
 import { getRepo } from "@/lib/db";
-import { isTimeLocked, normalizeEmail } from "@/lib/gifts";
+import { isExpired, isTimeLocked, normalizeEmail } from "@/lib/gifts";
 import { safeEqual, sha256Hex } from "@/lib/hash";
+import {
+  checkPinAttempts,
+  clearPinAttempts,
+  recordPinFailure,
+} from "@/lib/rateLimit";
 import { ERRORS, ok } from "@/lib/http";
 
 export async function POST(
@@ -35,6 +40,11 @@ export async function POST(
     if (gift.status === "expired" || gift.status === "refunded") {
       return ERRORS.GONE();
     }
+    // Lazily-computed expiry: a funded gift past its refund deadline can no
+    // longer be claimed (it is on its way back to the sender).
+    if (isExpired(gift)) {
+      return ERRORS.GONE();
+    }
 
     // Time lock
     if (isTimeLocked(gift)) {
@@ -53,11 +63,20 @@ export async function POST(
         );
       }
     } else if (protection === "pin") {
+      // Throttle brute-force attempts on the secret code.
+      const limit = checkPinAttempts(id);
+      if (!limit.ok) {
+        return ERRORS.TOO_MANY(
+          `Too many wrong codes. Try again in ${Math.ceil((limit.retryAfter ?? 0) / 60)} min.`,
+        );
+      }
       const pin = typeof body.pin === "string" ? body.pin : "";
       const hash = pin ? await sha256Hex(pin) : "";
       if (!gift.pin_hash || !safeEqual(hash, gift.pin_hash)) {
+        recordPinFailure(id);
         return ERRORS.FORBIDDEN("Wrong secret code.");
       }
+      clearPinAttempts(id);
     }
 
     const updated = await repo.update(id, {

@@ -37,7 +37,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  // No maximumScale/user-scalable lock: pinch-zoom must stay available (a11y).
 };
 
 export default function RootLayout({

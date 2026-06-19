@@ -18,6 +18,7 @@ interface Item {
   rule_type: string;
   protection: string;
   locked: boolean;
+  expired: boolean;
   thanks_message: string;
   created_at: string | null;
 }
@@ -92,7 +93,11 @@ export default function MyGiftsPage() {
   async function requestRefund(id: string) {
     setRefunding(id);
     try {
-      const res = await fetch(`/api/gifts/${id}/refund`, { method: "POST" });
+      const res = await fetch(`/api/gifts/${id}/refund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sender_id: getSenderId() }),
+      });
       const data = await res.json();
       if (res.ok) {
         toast("Refund requested — funds return to your wallet");
@@ -154,11 +159,13 @@ export default function MyGiftsPage() {
               g.occasion === "custom"
                 ? g.occasion_label || "Custom"
                 : o.label;
-            const isWaiting = g.status === "funded" && !g.locked;
+            const isWaiting = g.status === "funded" && !g.locked && !g.expired;
             const statusLabel =
-              g.locked && g.status === "funded"
-                ? "Locked"
-                : (STATUS_LABEL[g.status] ?? g.status);
+              g.expired && g.status === "funded"
+                ? "Expired"
+                : g.locked && g.status === "funded"
+                  ? "Locked"
+                  : (STATUS_LABEL[g.status] ?? g.status);
             const canRefund =
               g.status === "funded" && g.rule_type === "refund_if_unclaimed";
 
@@ -179,7 +186,9 @@ export default function MyGiftsPage() {
                       </span>
                       <span
                         className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                          STATUS_STYLE[g.status] ?? "bg-ink/10 text-ink/60"
+                          g.expired && g.status === "funded"
+                            ? "bg-red-500/10 text-red-500"
+                            : (STATUS_STYLE[g.status] ?? "bg-ink/10 text-ink/60")
                         } ${isWaiting ? "animate-pulse" : ""}`}
                       >
                         {statusLabel}

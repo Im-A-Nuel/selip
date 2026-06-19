@@ -6,7 +6,7 @@
 // Real on-chain claim (EOA->UA via 7702, cross-chain route) wired in week 3-4.
 // Protection gates are enforced by the claim API; demo mode exercises every gate.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { GiftCard } from "@/components/GiftCard";
 import { Confetti } from "@/components/Confetti";
@@ -14,7 +14,12 @@ import { Badge, PillButton } from "@/components/ui";
 import { BrandIcon } from "@/components/BrandIcon";
 import { useToast } from "@/components/Toast";
 import { DEST_CHAINS, LOGIN_METHODS } from "@/lib/constants";
-import { isMagicConfigured, loginWithOAuth } from "@/lib/magic";
+import {
+  getUserAddress,
+  isMagicConfigured,
+  loginWithOAuth,
+  resolveOAuthResult,
+} from "@/lib/magic";
 
 type Phase = "closed" | "gate" | "opening" | "revealed";
 
@@ -28,6 +33,7 @@ interface PublicView {
   protection: "open" | "email" | "pin";
   unlock_at: string | null;
   locked: boolean;
+  expired?: boolean;
   recipient_name?: string;
 }
 
@@ -60,7 +66,46 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
   const [thanks, setThanks] = useState("");
   const [thanksSent, setThanksSent] = useState(false);
 
+  // true while we resolve a returning Magic OAuth redirect on mount
+  const [resolving, setResolving] = useState(false);
+
   const name = view.recipient_name?.trim() || "";
+
+  // On mount, finish any Magic OAuth login that redirected back to this page.
+  // Without this, a real (configured) login would return here and stall on the
+  // closed screen. Demo mode (no keys) skips redirect entirely.
+  useEffect(() => {
+    if (!isMagicConfigured()) return;
+    let cancelled = false;
+    (async () => {
+      setResolving(true);
+      try {
+        const result = await resolveOAuthResult();
+        if (cancelled || !result) return;
+        const addr = await getUserAddress().catch(() => null);
+        if (addr) setRecipientAddr(addr);
+        await afterLogin(addr ?? undefined);
+      } catch {
+        // Not a redirect return (or it failed): show the normal closed screen.
+      } finally {
+        if (!cancelled) setResolving(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Shared post-login branch: open gifts claim immediately, protected gifts
+  // route to their gate. Used by both the demo path and the OAuth resolver.
+  async function afterLogin(addr?: string) {
+    if (view.protection === "open") {
+      await doClaim(addr);
+    } else {
+      setPhase("gate");
+    }
+  }
 
   async function chooseLogin(method: string) {
     setBusy(true);
@@ -74,11 +119,7 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
       if (!isMagicConfigured()) {
         setNote("Demo mode: sign-in is simulated because keys are not set.");
       }
-      if (view.protection === "open") {
-        await doClaim();
-      } else {
-        setPhase("gate");
-      }
+      await afterLogin();
     } catch (e) {
       setNote((e as Error).message);
     } finally {
@@ -102,7 +143,7 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
     await doClaim();
   }
 
-  async function doClaim() {
+  async function doClaim(addrOverride?: string) {
     setBusy(true);
     setGateError(null);
     try {
@@ -110,7 +151,7 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          recipient_addr: recipientAddr || "0xDEMORECIPIENT",
+          recipient_addr: addrOverride || recipientAddr || "0xDEMORECIPIENT",
           dest_chain: dest,
           claim_tx: "0xDEMOCLAIMTX",
           pin: view.protection === "pin" ? pin.trim() : undefined,
@@ -155,6 +196,31 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
     } finally {
       setBusy(false);
     }
+  }
+
+  // ---- Resolving a returning OAuth redirect ----
+  if (resolving && phase === "closed") {
+    return (
+      <Screen>
+        <Image src="/art/mascot.webp" alt="" width={140} height={140} priority className="float-slow h-28 w-28 object-contain" />
+        <p className="text-sm font-semibold text-ink/50">
+          Signing you in<span className="animate-pulse">…</span>
+        </p>
+      </Screen>
+    );
+  }
+
+  // ---- Expired (past refund deadline, unclaimed) ----
+  if (view.expired) {
+    return (
+      <Screen>
+        <Image src="/art/state-expired.webp" alt="" width={200} height={200} priority className="rise-in h-40 w-40 object-contain" />
+        <h1 className="text-2xl font-extrabold text-ink">This gift expired</h1>
+        <p className="max-w-sm text-sm text-ink/60">
+          It was not opened in time, so it is on its way back to the sender.
+        </p>
+      </Screen>
+    );
   }
 
   // ---- Time-locked ----

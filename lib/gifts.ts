@@ -26,6 +26,8 @@ export interface Gift {
   /** free-text label when occasion === "custom" */
   occasion_label?: string;
   amount_display: string;
+  /** numeric value of the gift (major units, e.g. 50 for $50) */
+  amount_value?: number;
   message?: string;
   card_theme: string;
   rule_type: string;
@@ -56,6 +58,7 @@ export interface CreateGiftInput {
   occasion: string;
   occasion_label?: string;
   amount_display: string;
+  amount_value?: number;
   message?: string;
   card_theme: string;
   rule_type: string;
@@ -82,6 +85,10 @@ const SLUG_WORDS = [
 ];
 
 const HEX = "0123456789abcdef";
+
+// Upper bound on a single gift's numeric value (major units). Guards against
+// fat-finger / overflow inputs; the demo deals in small amounts.
+export const MAX_AMOUNT = 1_000_000;
 
 // Slug like "a8f3-rizki". Random part keeps links unguessable; word part keeps
 // them friendly. randomInt injected so callers can seed deterministically.
@@ -114,6 +121,16 @@ export function validateCreateInput(
   }
   if (!input.amount_display || input.amount_display.trim().length === 0) {
     return { ok: false, error: "Amount is required." };
+  }
+  // When a numeric value is supplied it must be a sane, positive amount.
+  if (input.amount_value !== undefined) {
+    const v = input.amount_value;
+    if (!Number.isFinite(v) || v <= 0) {
+      return { ok: false, error: "Enter an amount greater than zero." };
+    }
+    if (v > MAX_AMOUNT) {
+      return { ok: false, error: `Amount too large (max ${MAX_AMOUNT}).` };
+    }
   }
   if (!input.card_theme || !isCardTheme(input.card_theme)) {
     return { ok: false, error: "Invalid card theme." };
@@ -165,6 +182,7 @@ export function toPublicView(gift: Gift) {
     protection: gift.protection ?? "open",
     unlock_at: gift.unlock_at ?? null,
     locked: isTimeLocked(gift),
+    expired: isExpired(gift),
     recipient_name: gift.recipient_name ?? "",
   };
 }
@@ -174,4 +192,19 @@ export function isTimeLocked(gift: Gift, now = Date.now()): boolean {
   if (!gift.unlock_at) return false;
   const t = Date.parse(gift.unlock_at);
   return !Number.isNaN(t) && now < t;
+}
+
+// Days after which an unclaimed funded gift is considered expired (refundable).
+// Mirrors the default ZeroDev refund rule. The contract enforces the real
+// deadline on-chain; this is the off-chain mirror so the UI can reflect it.
+export const EXPIRY_DAYS = 30;
+
+// True when a still-funded gift has passed its refund deadline without a claim.
+// Computed lazily from created_at so no cron/write is needed to "expire" gifts.
+export function isExpired(gift: Gift, now = Date.now()): boolean {
+  if (gift.status !== "funded") return false;
+  if (!gift.created_at) return false;
+  const created = Date.parse(gift.created_at);
+  if (Number.isNaN(created)) return false;
+  return now >= created + EXPIRY_DAYS * 24 * 60 * 60 * 1000;
 }
