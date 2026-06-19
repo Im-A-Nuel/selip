@@ -42,6 +42,8 @@ export interface Gift {
   thanks_message?: string;
   /** client-generated UUID identifying the sender's session/browser */
   sender_id?: string;
+  /** display name of the recipient (personalises the claim page) */
+  recipient_name?: string;
   source_chain?: string;
   smart_account_addr?: string;
   funding_tx?: string;
@@ -63,6 +65,7 @@ export interface CreateGiftInput {
   pin_hash?: string;
   unlock_at?: string;
   sender_id?: string;
+  recipient_name?: string;
 }
 
 const SLUG_WORDS = [
@@ -162,6 +165,7 @@ export function toPublicView(gift: Gift) {
     protection: gift.protection ?? "open",
     unlock_at: gift.unlock_at ?? null,
     locked: isTimeLocked(gift),
+    recipient_name: gift.recipient_name ?? "",
   };
 }
 

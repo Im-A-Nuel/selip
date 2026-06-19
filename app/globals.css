@@ -311,6 +311,19 @@ a {
   animation-delay: calc(var(--i, 0) * 45ms);
 }
 
+/* 3-D card flip: used in the claim "opening" phase for the reveal moment. */
+@keyframes card-flip {
+  0%   { transform: perspective(900px) rotateY(-90deg) scale(0.9); opacity: 0; }
+  45%  { opacity: 1; }
+  70%  { transform: perspective(900px) rotateY(7deg) scale(1.03); }
+  100% { transform: perspective(900px) rotateY(0deg) scale(1); opacity: 1; }
+}
+.card-flip {
+  animation: card-flip 0.85s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

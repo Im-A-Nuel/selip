@@ -69,6 +69,7 @@ class MemoryRepo implements GiftRepo {
       rule_type: input.rule_type,
       rule_param: input.rule_param,
       sender_id: input.sender_id,
+      recipient_name: input.recipient_name,
       status: "draft",
       created_at: new Date().toISOString(),
     };
@@ -157,6 +158,7 @@ class SupabaseRepo implements GiftRepo {
         rule_type: input.rule_type,
         rule_param: input.rule_param ?? null,
         sender_id: input.sender_id ?? null,
+        recipient_name: input.recipient_name ?? null,
         status: "draft" as GiftStatus,
       })
       .select()

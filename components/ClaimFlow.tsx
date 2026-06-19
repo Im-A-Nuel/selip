@@ -1,17 +1,17 @@
 "use client";
 
 // Recipient claim flow:
-//   closed -> (login method) -> (gate: pin / email) -> opening -> revealed -> thanks
+//   closed -> (login) -> (gate: pin/email) -> opening -> revealed -> thanks
 //
-// The real on-chain claim (EOA->UA upgrade via 7702, cross-chain route) is wired
-// in /lib during weeks 3-4. Here the protection gate is enforced by the claim
-// API; when SDK keys are absent we run a demo that still exercises every gate.
+// Real on-chain claim (EOA->UA via 7702, cross-chain route) wired in week 3-4.
+// Protection gates are enforced by the claim API; demo mode exercises every gate.
 
 import { useState } from "react";
 import Image from "next/image";
 import { GiftCard } from "@/components/GiftCard";
 import { Confetti } from "@/components/Confetti";
 import { Badge, PillButton } from "@/components/ui";
+import { BrandIcon } from "@/components/BrandIcon";
 import { useToast } from "@/components/Toast";
 import { DEST_CHAINS, LOGIN_METHODS } from "@/lib/constants";
 import { isMagicConfigured, loginWithOAuth } from "@/lib/magic";
@@ -28,6 +28,7 @@ interface PublicView {
   protection: "open" | "email" | "pin";
   unlock_at: string | null;
   locked: boolean;
+  recipient_name?: string;
 }
 
 function formatUnlock(iso: string | null): string {
@@ -40,13 +41,7 @@ function formatUnlock(iso: string | null): string {
   });
 }
 
-export function ClaimFlow({
-  giftId,
-  view,
-}: {
-  giftId: string;
-  view: PublicView;
-}) {
+export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }) {
   const toast = useToast();
   const [phase, setPhase] = useState<Phase>("closed");
   const [dest, setDest] = useState<string>(DEST_CHAINS[0].id);
@@ -65,9 +60,8 @@ export function ClaimFlow({
   const [thanks, setThanks] = useState("");
   const [thanksSent, setThanksSent] = useState(false);
 
-  const timeLocked = view.locked;
+  const name = view.recipient_name?.trim() || "";
 
-  // Step 1: pick a login method. Real keys -> redirect; demo -> move on.
   async function chooseLogin(method: string) {
     setBusy(true);
     setNote(null);
@@ -75,9 +69,8 @@ export function ClaimFlow({
       if (isMagicConfigured() && (method === "google" || method === "apple")) {
         const redirect = `${window.location.origin}${window.location.pathname}`;
         await loginWithOAuth(method, redirect);
-        return; // browser redirects away
+        return;
       }
-      // Demo (or email method): advance to the protection gate.
       if (!isMagicConfigured()) {
         setNote("Demo mode: sign-in is simulated because keys are not set.");
       }
@@ -93,7 +86,6 @@ export function ClaimFlow({
     }
   }
 
-  // Step 2: verify the gate, then claim.
   async function submitGate() {
     setGateError(null);
     if (view.protection === "pin" && pin.trim().length === 0) {
@@ -118,13 +110,11 @@ export function ClaimFlow({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          // Demo placeholders; real values come from the on-chain claim tx.
-          recipient_addr: "0xDEMORECIPIENT",
+          recipient_addr: recipientAddr || "0xDEMORECIPIENT",
           dest_chain: dest,
           claim_tx: "0xDEMOCLAIMTX",
           pin: view.protection === "pin" ? pin.trim() : undefined,
-          recipient_email:
-            view.protection === "email" ? email.trim() : undefined,
+          recipient_email: view.protection === "email" ? email.trim() : undefined,
         }),
       });
       const data = await res.json();
@@ -135,7 +125,7 @@ export function ClaimFlow({
         return;
       }
       setPhase("opening");
-      setTimeout(() => setPhase("revealed"), 1100);
+      setTimeout(() => setPhase("revealed"), 1000);
     } catch {
       const msg = "Network hiccup. Please try again.";
       if (phase === "gate") setGateError(msg);
@@ -167,25 +157,36 @@ export function ClaimFlow({
     }
   }
 
-  // ---- Time-locked screen ----
-  if (timeLocked) {
+  // ---- Time-locked ----
+  if (view.locked) {
     return (
       <Screen>
-        <Image
-          src="/art/state-expired.webp"
-          alt=""
-          width={200}
-          height={200}
-          priority
-          className="rise-in h-40 w-40 object-contain"
-        />
+        <Image src="/art/state-expired.webp" alt="" width={200} height={200} priority className="rise-in h-40 w-40 object-contain" />
         <h1 className="text-2xl font-extrabold text-ink">Not yet</h1>
         <p className="max-w-sm text-sm text-ink/60">
           This gift unlocks on{" "}
-          <span className="font-semibold text-ink">
-            {formatUnlock(view.unlock_at)}
-          </span>
-          . Come back then to open it.
+          <span className="font-semibold text-ink">{formatUnlock(view.unlock_at)}</span>. Come back then.
+        </p>
+      </Screen>
+    );
+  }
+
+  // ---- Opening: 3D flip animation ----
+  if (phase === "opening") {
+    return (
+      <Screen>
+        <div className="card-flip w-full max-w-[280px]">
+          <GiftCard
+            occasion={view.occasion}
+            occasionLabel={view.occasion_label}
+            amountDisplay={view.amount_display}
+            message={view.message}
+            theme={view.card_theme}
+            revealed={false}
+          />
+        </div>
+        <p className="text-sm font-semibold text-ink/50">
+          Opening your gift<span className="animate-pulse">…</span>
         </p>
       </Screen>
     );
@@ -196,15 +197,8 @@ export function ClaimFlow({
     return (
       <Screen>
         <Confetti />
-        <Image
-          src="/art/reveal.webp"
-          alt=""
-          width={160}
-          height={160}
-          priority
-          className="reveal-pop -mb-2 h-28 w-28 object-contain"
-        />
-        <div className="reveal-pop">
+        <Image src="/art/reveal.webp" alt="" width={160} height={160} priority className="reveal-pop -mb-2 h-28 w-28 object-contain" />
+        <div className="reveal-pop w-full max-w-[280px]">
           <GiftCard
             occasion={view.occasion}
             occasionLabel={view.occasion_label}
@@ -216,9 +210,7 @@ export function ClaimFlow({
         <h1 className="text-2xl font-extrabold text-ink">This gift is yours 💛</h1>
 
         <div className="glass w-full rounded-2xl p-4 text-left">
-          <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-ink/50">
-            Where should it land?
-          </label>
+          <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-ink/50">Where should it land?</label>
           <div className="grid grid-cols-2 gap-2">
             {DEST_CHAINS.map((c) => (
               <button
@@ -234,9 +226,7 @@ export function ClaimFlow({
               </button>
             ))}
           </div>
-          <label className="mt-3 block text-xs font-bold uppercase tracking-wide text-ink/50">
-            Your wallet address
-          </label>
+          <label className="mt-3 block text-xs font-bold uppercase tracking-wide text-ink/50">Your wallet address</label>
           <div className="mt-2 flex items-center rounded-xl bg-white/70 px-3 py-2.5 ring-1 ring-ink/5">
             <input
               value={recipientAddr}
@@ -253,23 +243,16 @@ export function ClaimFlow({
 
         <PillButton
           className="w-full py-4 text-base"
-          onClick={() =>
-            toast("Cross-chain cash-out runs once the SDK is wired (week 4)")
-          }
+          onClick={() => toast("Cross-chain cash-out runs once the SDK is wired (week 4)")}
         >
           Claim to {DEST_CHAINS.find((c) => c.id === dest)?.label} →
         </PillButton>
 
-        {/* Thank-you reply */}
         {thanksSent ? (
-          <p className="text-sm font-semibold text-coral-600">
-            Your thank-you is on its way 💌
-          </p>
+          <p className="text-sm font-semibold text-coral-600">Your thank-you is on its way 💌</p>
         ) : (
           <div className="glass w-full rounded-2xl p-4 text-left">
-            <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-ink/50">
-              Say thanks to the sender
-            </label>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-ink/50">Say thanks to the sender</label>
             <textarea
               value={thanks}
               maxLength={280}
@@ -293,18 +276,11 @@ export function ClaimFlow({
     );
   }
 
-  // ---- Protection gate ----
+  // ---- Gate ----
   if (phase === "gate") {
     return (
       <Screen>
-        <Image
-          src="/art/mascot.webp"
-          alt=""
-          width={160}
-          height={160}
-          priority
-          className="rise-in h-28 w-28 object-contain"
-        />
+        <Image src="/art/mascot.webp" alt="" width={160} height={160} priority className="rise-in h-28 w-28 object-contain" />
         <h1 className="text-2xl font-extrabold text-ink">
           {view.protection === "pin" ? "Enter the secret code" : "Confirm it's you"}
         </h1>
@@ -335,28 +311,22 @@ export function ClaimFlow({
           )}
         </div>
         {gateError && (
-          <p className="rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-600">
-            {gateError}
-          </p>
+          <p className="rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-600">{gateError}</p>
         )}
-        <PillButton
-          loading={busy}
-          onClick={submitGate}
-          className="w-full py-4 text-base"
-        >
+        <PillButton loading={busy} onClick={submitGate} className="w-full py-4 text-base">
           Open gift
         </PillButton>
       </Screen>
     );
   }
 
-  // ---- Closed: login methods ----
+  // ---- Closed: login ----
   return (
     <Screen>
       <Badge>
-        <span>🎁</span> A gift for you
+        <span aria-hidden className="text-[10px]">🎁</span> A gift for you
       </Badge>
-      <div className="float-slow [--rot:-2deg]">
+      <div className="float-slow [--rot:-2deg] w-full max-w-[280px]">
         <GiftCard
           occasion={view.occasion}
           occasionLabel={view.occasion_label}
@@ -366,12 +336,27 @@ export function ClaimFlow({
           revealed={false}
         />
       </div>
-      <h1 className="max-w-xs text-[1.8rem] font-extrabold leading-tight text-ink">
-        Someone slipped you a gift
-      </h1>
-      <p className="-mt-2 max-w-sm text-sm leading-relaxed text-ink/60">
-        Open it by signing in. Nothing to install, no wallet, no technical stuff.
-      </p>
+      <div className="flex flex-col items-center gap-2 text-center">
+        {name ? (
+          <>
+            <h1 className="text-[1.9rem] font-extrabold leading-tight text-ink">
+              Hey {name}! 🎉
+            </h1>
+            <p className="max-w-sm text-sm leading-relaxed text-ink/60">
+              Someone slipped you a gift. Open it by signing in — no wallet, nothing to install.
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="max-w-xs text-[1.8rem] font-extrabold leading-tight text-ink">
+              Someone slipped you a gift
+            </h1>
+            <p className="max-w-sm text-sm leading-relaxed text-ink/60">
+              Open it by signing in. Nothing to install, no wallet, no technical stuff.
+            </p>
+          </>
+        )}
+      </div>
 
       <div className="flex w-full flex-col gap-2.5">
         {LOGIN_METHODS.map((m) => (
@@ -382,11 +367,7 @@ export function ClaimFlow({
             onClick={() => chooseLogin(m.id)}
             className="w-full py-3.5 text-[15px]"
           >
-            {m.icon && (
-              <span className="text-base font-black" aria-hidden>
-                {m.icon}
-              </span>
-            )}
+            <BrandIcon id={m.id} />
             {m.label}
           </PillButton>
         ))}

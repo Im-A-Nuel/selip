@@ -139,11 +139,12 @@ export default function MyGiftsPage() {
           />
           <h2 className="text-lg font-extrabold text-ink">No gifts yet</h2>
           <p className="max-w-xs text-sm text-ink/60">
-            Gifts you create on this device show up here so you can track them.
+            Create your first gift — takes about 2 minutes. You'll see all your gifts and their status here.
           </p>
-          <Link href="/create">
-            <PillButton>Create a gift</PillButton>
+          <Link href="/create" className="w-full max-w-xs">
+            <PillButton className="w-full py-4">Send someone a gift →</PillButton>
           </Link>
+          <p className="text-xs text-ink/35">No wallet needed on either side.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">

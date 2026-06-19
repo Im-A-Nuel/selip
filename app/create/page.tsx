@@ -27,6 +27,7 @@ import { getSenderId, rememberGiftId } from "@/lib/myGifts";
 interface Draft {
   occasion: OccasionId;
   customLabel: string;
+  recipientName: string;
   amount: string;
   message: string;
   theme: CardThemeId;
@@ -46,6 +47,7 @@ export default function CreatePage() {
   const [draft, setDraft] = useState<Draft>({
     occasion: "birthday",
     customLabel: "",
+    recipientName: "",
     amount: "",
     message: "",
     theme: "sunrise",
@@ -57,6 +59,7 @@ export default function CreatePage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [claimUrl, setClaimUrl] = useState<string | null>(null);
+  const [claimSlug, setClaimSlug] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [dir, setDir] = useState<1 | -1>(1);
 
@@ -159,6 +162,7 @@ export default function CreatePage() {
             ? new Date(draft.unlockAt).toISOString()
             : undefined,
           sender_id: getSenderId(),
+          recipient_name: draft.recipientName.trim() || undefined,
         }),
       });
       const created = await createRes.json();
@@ -188,6 +192,7 @@ export default function CreatePage() {
 
       const base =
         typeof window !== "undefined" ? window.location.origin : "";
+      setClaimSlug(created.claim_slug);
       setClaimUrl(`${base}/g/${created.claim_slug}`);
       toast("Gift funded 🎁");
     } catch {
@@ -232,6 +237,20 @@ export default function CreatePage() {
         </p>
         <div className="flex w-full flex-col gap-3">
           <ShareButton url={claimUrl} />
+          {/* WhatsApp deep link */}
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(
+              draft.recipientName.trim()
+                ? `Hey ${draft.recipientName.trim()}! 🎁 I slipped you a ${amountDisplay} gift — open it here (no wallet needed): ${claimUrl}`
+                : `🎁 I slipped you a gift! Open it here — no wallet, no app needed: ${claimUrl}`
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] py-3.5 text-[15px] font-semibold text-white shadow-md shadow-green-400/25 transition-[transform,opacity] hover:-translate-y-0.5 hover:opacity-90 active:scale-[0.97]"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.554 4.101 1.523 5.824L0 24l6.327-1.501A11.956 11.956 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.003-1.368l-.359-.213-3.722.883.935-3.613-.234-.372A9.764 9.764 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182c5.43 0 9.818 4.388 9.818 9.818 0 5.43-4.388 9.818-9.818 9.818z"/></svg>
+            Share on WhatsApp
+          </a>
           <div className="glass flex w-full items-center gap-2 rounded-2xl p-2 pl-4">
             <input
               readOnly
@@ -247,15 +266,17 @@ export default function CreatePage() {
             </PillButton>
           </div>
         </div>
-        <div className="flex items-center gap-4 text-sm font-semibold">
-          {/* full reload to reset the wizard */}
-          <a href="/create" className="text-coral-600">
-            Create another
-          </a>
-          <span className="text-ink/20">·</span>
-          <Link href="/gifts" className="text-ink/60">
-            My gifts
-          </Link>
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm font-semibold">
+          {claimSlug && (
+            <button
+              onClick={() => window.open(`/g/${claimSlug}`, "_blank")}
+              className="text-coral-600"
+            >
+              Preview as recipient →
+            </button>
+          )}
+          <a href="/create" className="text-ink/60">Create another</a>
+          <Link href="/gifts" className="text-ink/60">My gifts</Link>
         </div>
       </main>
     );
@@ -374,13 +395,24 @@ export default function CreatePage() {
         )}
 
         {step === 2 && (
-          <Field label="Add a message (optional)">
+          <Field label="Personal touch">
+            <div className="glass flex items-center gap-2 rounded-2xl px-4 py-3">
+              <span className="shrink-0 text-sm font-semibold text-ink/40">To:</span>
+              <input
+                autoFocus
+                maxLength={40}
+                value={draft.recipientName}
+                onChange={(e) => setDraft({ ...draft, recipientName: e.target.value })}
+                placeholder="Recipient's name (optional)"
+                className="w-full bg-transparent text-ink outline-none placeholder:text-ink/30"
+              />
+            </div>
             <textarea
               maxLength={280}
               value={draft.message}
               onChange={(e) => setDraft({ ...draft, message: e.target.value })}
               placeholder="Happy birthday! Hope your day is wonderful."
-              rows={4}
+              rows={3}
               className="glass w-full resize-none rounded-2xl px-5 py-4 text-ink outline-none placeholder:text-ink/30"
             />
             <p className="-mt-1 text-right text-xs text-ink/40">

@@ -3,9 +3,9 @@ import Image from "next/image";
 import { Badge, PillButton } from "@/components/ui";
 
 const STEPS = [
-  { art: "/art/how-create.webp", title: "Create", desc: "Pick an amount and a card" },
-  { art: "/art/how-share.webp", title: "Share", desc: "Send one simple link" },
-  { art: "/art/how-open.webp", title: "Open", desc: "They sign in with Google" },
+  { art: "/art/how-create.webp", title: "Create", desc: "Pick an amount, add a personal message" },
+  { art: "/art/how-share.webp", title: "Share", desc: "Send one link — via WhatsApp, chat, anything" },
+  { art: "/art/how-open.webp", title: "Open", desc: "They sign in with Google. No wallet, no app" },
 ];
 
 export default function Home() {
@@ -43,28 +43,30 @@ export default function Home() {
       </div>
 
       {/* How it works */}
-      <div className="mt-8 grid grid-cols-3 gap-3">
+      <div className="stagger mt-8 grid grid-cols-3 gap-3">
         {STEPS.map((s, i) => (
           <div
             key={s.title}
             style={{ "--i": i } as React.CSSProperties}
-            className="soft overflow-hidden rounded-3xl pb-3 text-center"
+            className="soft overflow-hidden rounded-3xl pb-4 text-center"
           >
-            <div className="relative aspect-square w-full overflow-hidden">
+            <div className="relative aspect-square w-full overflow-hidden rounded-t-3xl">
               <Image
                 src={s.art}
                 alt=""
                 fill
-                sizes="120px"
+                sizes="130px"
                 className="object-cover"
               />
             </div>
-            <span className="mt-2 block text-sm font-bold text-ink">
-              {s.title}
-            </span>
-            <span className="mt-0.5 block px-1.5 text-[11px] leading-tight text-ink/50">
-              {s.desc}
-            </span>
+            <div className="mt-2 px-2">
+              <span className="block text-sm font-extrabold text-ink">
+                {s.title}
+              </span>
+              <span className="mt-1 block text-[11px] leading-snug text-ink/50">
+                {s.desc}
+              </span>
+            </div>
           </div>
         ))}
       </div>
