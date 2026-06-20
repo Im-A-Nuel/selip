@@ -6,7 +6,9 @@ import type { NextRequest } from "next/server";
 import { getRepo } from "@/lib/db";
 import { occasionById } from "@/lib/constants";
 
-export const runtime = "edge";
+// Node runtime so the OG image uses the same Supabase DB path as every other
+// route (edge + the dynamic supabase import is an unverified combo).
+export const runtime = "nodejs";
 
 const OCCASION_EMOJI: Record<string, string> = {
   birthday: "🎂",

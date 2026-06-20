@@ -49,11 +49,12 @@ export const PROTECTION_OPTIONS = [
 
 export type ProtectionId = (typeof PROTECTION_OPTIONS)[number]["id"];
 
-// Sign-in methods offered to the recipient.
+// Sign-in methods offered to the recipient. Brand glyph is rendered by
+// <BrandIcon id=…/>, so no icon field is kept here.
 export const LOGIN_METHODS = [
-  { id: "google", label: "Continue with Google", icon: "G" },
-  { id: "apple", label: "Continue with Apple", icon: "" },
-  { id: "email", label: "Use email instead", icon: "✉️" },
+  { id: "google", label: "Continue with Google" },
+  { id: "apple", label: "Continue with Apple" },
+  { id: "email", label: "Use email instead" },
 ] as const;
 
 export type LoginMethodId = (typeof LOGIN_METHODS)[number]["id"];

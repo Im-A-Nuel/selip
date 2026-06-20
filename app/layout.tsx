@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/Toast";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { ServiceWorker } from "@/components/ServiceWorker";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -51,6 +52,7 @@ export default function RootLayout({
         <div className="aurora" aria-hidden />
         <ToastProvider>{children}</ToastProvider>
         <InstallPrompt />
+        <ServiceWorker />
       </body>
     </html>
   );
