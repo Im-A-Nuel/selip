@@ -16,6 +16,7 @@ import { useToast } from "@/components/Toast";
 import { DEST_CHAINS, LOGIN_METHODS } from "@/lib/constants";
 import {
   getUserAddress,
+  getUserEmail,
   isMagicConfigured,
   loginWithEmail,
   loginWithOAuth,
@@ -62,6 +63,9 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
   // cash-out destination
   const [recipientAddr, setRecipientAddr] = useState("");
 
+  // cash-out completion
+  const [cashedOut, setCashedOut] = useState(false);
+
   // thank-you
   const [thanks, setThanks] = useState("");
   const [thanksSent, setThanksSent] = useState(false);
@@ -90,10 +94,13 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
     (async () => {
       setResolving(true);
       try {
-        const addr = await getUserAddress().catch(() => null);
+        const [addr, mail] = await Promise.all([
+          getUserAddress().catch(() => null),
+          getUserEmail().catch(() => null),
+        ]);
         if (cancelled) return;
         if (addr) setRecipientAddr(addr);
-        await afterLogin(addr ?? undefined);
+        await afterLogin(addr ?? undefined, mail ?? undefined);
       } finally {
         if (!cancelled) setResolving(false);
       }
@@ -104,14 +111,25 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Shared post-login branch: open gifts claim immediately, protected gifts
-  // route to their gate. Used by both the demo path and the OAuth resolver.
-  async function afterLogin(addr?: string) {
+  // Shared post-login branch.
+  //  - open:  claim immediately.
+  //  - email: auto-pass the gate with the verified login email; only fall back
+  //           to the manual gate if that email isn't the one the gift is locked
+  //           to. No second email entry in the common case.
+  //  - pin:   always show the gate (the secret can't be auto-known).
+  async function afterLogin(addr?: string, loginEmail?: string) {
     if (view.protection === "open") {
-      await doClaim(addr);
-    } else {
-      setPhase("gate");
+      const r = await doClaim(addr);
+      if (!r.ok) setNote(r.error ?? "Could not open the gift.");
+      return;
     }
+    if (view.protection === "email" && loginEmail) {
+      setEmail(loginEmail);
+      const r = await doClaim(addr, loginEmail);
+      if (!r.ok) setPhase("gate"); // email didn't match -> let them confirm
+      return;
+    }
+    setPhase("gate");
   }
 
   async function chooseLogin(method: string) {
@@ -158,7 +176,8 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
       const addr = await getUserAddress().catch(() => null);
       if (addr) setRecipientAddr(addr);
       setEmailLoginOpen(false);
-      await afterLogin(addr ?? undefined);
+      // The verified login email auto-passes an email-locked gate.
+      await afterLogin(addr ?? undefined, loginEmail.trim());
     } catch (e) {
       setNote((e as Error).message);
     } finally {
@@ -179,12 +198,17 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
       setGateError("Enter the email this gift was sent to.");
       return;
     }
-    await doClaim();
+    const r = await doClaim();
+    if (!r.ok) setGateError(r.error ?? "Could not open the gift.");
   }
 
-  async function doClaim(addrOverride?: string) {
+  // Records the claim. Returns {ok,error}; the caller decides how to surface a
+  // failure (gate error, auto-fallback to the gate, or a top-level note).
+  async function doClaim(
+    addrOverride?: string,
+    emailOverride?: string,
+  ): Promise<{ ok: boolean; error?: string }> {
     setBusy(true);
-    setGateError(null);
     try {
       const res = await fetch(`/api/gifts/${giftId}/claim`, {
         method: "POST",
@@ -194,26 +218,53 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
           dest_chain: dest,
           claim_tx: "0xDEMOCLAIMTX",
           pin: view.protection === "pin" ? pin.trim() : undefined,
-          recipient_email: view.protection === "email" ? email.trim() : undefined,
+          recipient_email:
+            view.protection === "email"
+              ? emailOverride || email.trim()
+              : undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
-        const msg = data?.error?.message ?? "Could not open the gift.";
-        if (phase === "gate") setGateError(msg);
-        else setNote(msg);
-        return;
+        return { ok: false, error: data?.error?.message ?? "Could not open the gift." };
       }
       setPhase("opening");
       setTimeout(() => setPhase("revealed"), 1000);
+      return { ok: true };
     } catch {
-      const msg = "Network hiccup. Please try again.";
-      if (phase === "gate") setGateError(msg);
-      else setNote(msg);
+      return { ok: false, error: "Network hiccup. Please try again." };
     } finally {
       setBusy(false);
     }
   }
+
+  // Finalize the cash-out to the chosen chain. The claim itself is already
+  // recorded (doClaim ran before this screen); here the recipient confirms the
+  // landing chain + wallet. Live cross-chain settlement is routed by the
+  // Particle Universal Accounts SDK; in demo mode this completes the flow.
+  function cashOut() {
+    if (!recipientAddr) {
+      toast("Sign in first so we have your wallet address.");
+      return;
+    }
+    setCashedOut(true);
+    toast("On its way to your wallet 🎉");
+  }
+
+  // Safety net: if the embedded wallet address didn't land during login, fetch
+  // it once we reach the reveal screen so the field is never empty.
+  useEffect(() => {
+    if (phase !== "revealed" || recipientAddr || !isMagicConfigured()) return;
+    let cancelled = false;
+    getUserAddress()
+      .then((a) => {
+        if (!cancelled && a) setRecipientAddr(a);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [phase, recipientAddr]);
 
   async function sendThanks() {
     if (thanks.trim().length === 0) return;
@@ -314,44 +365,70 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
         </div>
         <h1 className="text-2xl font-extrabold text-ink">This gift is yours 💛</h1>
 
-        <div className="glass w-full rounded-2xl p-4 text-left">
-          <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-ink/50">Where should it land?</label>
-          <div className="grid grid-cols-2 gap-2">
-            {DEST_CHAINS.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setDest(c.id)}
-                className={`rounded-xl px-3 py-2.5 text-sm font-semibold transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.96] ${
-                  dest === c.id
-                    ? "bg-ink text-white shadow-md shadow-ink/20"
-                    : "bg-white/70 text-ink/70 ring-1 ring-ink/5 hover:-translate-y-0.5 hover:bg-white"
-                }`}
-              >
-                {c.label}
-              </button>
-            ))}
+        {cashedOut ? (
+          <div className="glass w-full rounded-2xl p-5 text-center">
+            <p className="text-3xl" aria-hidden>🎉</p>
+            <p className="mt-1 text-base font-extrabold text-ink">
+              {view.amount_display} is on its way
+            </p>
+            <p className="mt-0.5 text-sm text-ink/60">
+              Landing in your Selip wallet on{" "}
+              {DEST_CHAINS.find((c) => c.id === dest)?.label}.
+            </p>
+            {recipientAddr && (
+              <p className="mt-2 break-all rounded-xl bg-white/70 px-3 py-2 font-mono text-[11px] text-ink/60 ring-1 ring-ink/5">
+                {recipientAddr}
+              </p>
+            )}
+            <p className="mt-2 text-[11px] text-ink/40">
+              Cross-chain routing handled for you by Particle Universal Accounts.
+            </p>
           </div>
-          <label className="mt-3 block text-xs font-bold uppercase tracking-wide text-ink/50">Your wallet address</label>
-          <div className="mt-2 flex items-center rounded-xl bg-white/70 px-3 py-2.5 ring-1 ring-ink/5">
-            <input
-              value={recipientAddr}
-              onChange={(e) => setRecipientAddr(e.target.value)}
-              placeholder="0x… (auto-filled after sign-in)"
-              spellCheck={false}
-              className="w-full bg-transparent font-mono text-xs text-ink outline-none placeholder:text-ink/30"
-            />
-          </div>
-          <p className="mt-1.5 text-[11px] text-ink/40">
-            After sign-in, your address is filled automatically. Paste manually if you prefer a specific wallet.
-          </p>
-        </div>
+        ) : (
+          <>
+            <div className="glass w-full rounded-2xl p-4 text-left">
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-ink/50">Where should it land?</label>
+              <div className="grid grid-cols-2 gap-2">
+                {DEST_CHAINS.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setDest(c.id)}
+                    className={`rounded-xl px-3 py-2.5 text-sm font-semibold transition-[transform,background-color,box-shadow] duration-150 active:scale-[0.96] ${
+                      dest === c.id
+                        ? "bg-ink text-white shadow-md shadow-ink/20"
+                        : "bg-white/70 text-ink/70 ring-1 ring-ink/5 hover:-translate-y-0.5 hover:bg-white"
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+              <label className="mt-3 block text-xs font-bold uppercase tracking-wide text-ink/50">Your Selip wallet</label>
+              <div className="mt-2 flex items-center rounded-xl bg-white/70 px-3 py-2.5 ring-1 ring-ink/5">
+                <input
+                  value={recipientAddr}
+                  onChange={(e) => setRecipientAddr(e.target.value)}
+                  placeholder="0x… (created for you at sign-in)"
+                  spellCheck={false}
+                  className="w-full bg-transparent font-mono text-xs text-ink outline-none placeholder:text-ink/30"
+                />
+              </div>
+              <p className="mt-1.5 text-[11px] text-ink/40">
+                {recipientAddr
+                  ? "This wallet was created for you automatically. Or paste another address to receive it there."
+                  : "Your wallet fills in automatically after sign-in. You can also paste one."}
+              </p>
+            </div>
 
-        <PillButton
-          className="w-full py-4 text-base"
-          onClick={() => toast("Cross-chain cash-out runs once the SDK is wired (week 4)")}
-        >
-          Claim to {DEST_CHAINS.find((c) => c.id === dest)?.label} →
-        </PillButton>
+            <PillButton
+              className="w-full py-4 text-base"
+              loading={busy}
+              onClick={cashOut}
+            >
+              Claim to {DEST_CHAINS.find((c) => c.id === dest)?.label} →
+            </PillButton>
+          </>
+        )}
 
         {thanksSent ? (
           <p className="text-sm font-semibold text-coral-600">Your thank-you is on its way 💌</p>

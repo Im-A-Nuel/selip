@@ -76,6 +76,14 @@ export async function getUserAddress(): Promise<string | null> {
   return info?.publicAddress ?? null;
 }
 
+// Verified email of the signed-in user (email OTP or the OAuth account email).
+// Used to auto-pass an email-locked gift's gate without asking again.
+export async function getUserEmail(): Promise<string | null> {
+  const magic = await getMagic();
+  const info = await magic.user.getInfo();
+  return info?.email ?? null;
+}
+
 export async function logout(): Promise<void> {
   const magic = await getMagic();
   await magic.user.logout();
