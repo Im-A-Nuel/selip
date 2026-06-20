@@ -85,7 +85,7 @@ export function GiftCard({
         {message ? (
           <div className="mt-auto">
             <p
-              className={`rounded-2xl px-4 py-3 text-sm leading-relaxed backdrop-blur ${
+              className={`line-clamp-4 break-words rounded-2xl px-4 py-3 text-sm leading-relaxed backdrop-blur ${
                 illustrated
                   ? "bg-white/75 text-ink/85 shadow-sm ring-1 ring-black/5"
                   : "bg-white/20 text-white ring-1 ring-white/25"

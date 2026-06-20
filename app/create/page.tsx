@@ -8,7 +8,7 @@ import { Stepper } from "@/components/Stepper";
 import { Confetti } from "@/components/Confetti";
 import { Chip, PillButton } from "@/components/ui";
 import { ShareButton } from "@/components/ShareButton";
-import { QrCode } from "@/components/QrCode";
+import { QrModal } from "@/components/QrModal";
 import { AssetIcon } from "@/components/AssetIcon";
 import { useToast } from "@/components/Toast";
 import {
@@ -276,20 +276,16 @@ export default function CreatePage() {
             </PillButton>
           </div>
           <button
-            onClick={() => setShowQr((v) => !v)}
+            onClick={() => setShowQr(true)}
             className="text-sm font-semibold text-coral-600 hover:text-coral-700"
           >
-            {showQr ? "Hide QR code" : "Show QR code"}
+            Show QR code
           </button>
-          {showQr && (
-            <div className="flex flex-col items-center gap-1 pt-1">
-              <QrCode value={claimUrl} />
-              <p className="text-[11px] text-ink/40">
-                Let them scan it to open the gift.
-              </p>
-            </div>
-          )}
         </div>
+
+        {showQr && (
+          <QrModal value={claimUrl} onClose={() => setShowQr(false)} />
+        )}
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm font-semibold">
           {claimSlug && (
             <button
