@@ -249,8 +249,8 @@ export default function CreatePage() {
           <a
             href={`https://wa.me/?text=${encodeURIComponent(
               draft.recipientName.trim()
-                ? `Hey ${draft.recipientName.trim()}! 🎁 I slipped you a ${amountDisplay} gift — open it here (no wallet needed): ${claimUrl}`
-                : `🎁 I slipped you a gift! Open it here — no wallet, no app needed: ${claimUrl}`
+                ? `Hey ${draft.recipientName.trim()}! 🎁 I slipped you a ${amountDisplay} gift. Open it here (no wallet needed): ${claimUrl}`
+                : `🎁 I slipped you a gift! Open it here. No wallet, no app needed: ${claimUrl}`
             )}`}
             target="_blank"
             rel="noopener noreferrer"

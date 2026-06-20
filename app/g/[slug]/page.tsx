@@ -21,7 +21,7 @@ export async function generateMetadata({
       ? gift.occasion_label?.trim() || "special"
       : occasionById(gift.occasion).label;
   const title = `A ${label} gift for you`;
-  const description = `${gift.amount_display} — open it with Google. No wallet needed.`;
+  const description = `${gift.amount_display}. Open it with Google. No wallet needed.`;
   const ogImage = `/api/og/${slug}`;
   return {
     title,

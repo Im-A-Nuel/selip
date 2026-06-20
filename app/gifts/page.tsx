@@ -100,7 +100,7 @@ export default function MyGiftsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        toast("Refund requested — funds return to your wallet");
+        toast("Refund requested. Funds return to your wallet");
         await load();
       } else {
         toast(data?.error?.message ?? "Refund failed.");
@@ -144,7 +144,7 @@ export default function MyGiftsPage() {
           />
           <h2 className="text-lg font-extrabold text-ink">No gifts yet</h2>
           <p className="max-w-xs text-sm text-ink/60">
-            Create your first gift — takes about 2 minutes. You'll see all your gifts and their status here.
+            Create your first gift in about 2 minutes. You'll see all your gifts and their status here.
           </p>
           <Link href="/create" className="w-full max-w-xs">
             <PillButton className="w-full py-4">Send someone a gift →</PillButton>
@@ -223,7 +223,7 @@ export default function MyGiftsPage() {
                     onClick={() => requestRefund(g.id)}
                     className="mt-3 w-full rounded-2xl border border-red-200 bg-red-50 py-2.5 text-sm font-semibold text-red-600 transition-opacity hover:opacity-80 disabled:opacity-40"
                   >
-                    {refunding === g.id ? "Requesting refund…" : "Refund — I changed my mind"}
+                    {refunding === g.id ? "Requesting refund…" : "Refund, I changed my mind"}
                   </button>
                 )}
               </div>

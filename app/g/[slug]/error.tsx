@@ -31,7 +31,7 @@ export default function GiftError({
       />
       <h1 className="text-2xl font-extrabold text-ink">Something went wrong</h1>
       <p className="max-w-xs text-sm text-ink/60">
-        We couldn't load this gift right now. The link is still valid — try again in a moment.
+        We couldn't load this gift right now. The link is still valid. Try again in a moment.
       </p>
       <div className="flex gap-3">
         <PillButton onClick={reset} className="px-6 py-3">

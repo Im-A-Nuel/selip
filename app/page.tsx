@@ -5,7 +5,7 @@ import { ONCHAIN_PROOF } from "@/lib/constants";
 
 const STEPS = [
   { art: "/art/how-create.webp", title: "Create", desc: "Pick an amount, add a personal message" },
-  { art: "/art/how-share.webp", title: "Share", desc: "Send one link — via WhatsApp, chat, anything" },
+  { art: "/art/how-share.webp", title: "Share", desc: "Send one link, via WhatsApp or any chat" },
   { art: "/art/how-open.webp", title: "Open", desc: "They sign in with Google. No wallet, no app" },
 ];
 

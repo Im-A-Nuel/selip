@@ -525,7 +525,7 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
               Hey {name}! 🎉
             </h1>
             <p className="max-w-sm text-sm leading-relaxed text-ink/60">
-              Someone slipped you a gift. Open it by signing in — no wallet, nothing to install.
+              Someone slipped you a gift. Open it by signing in. No wallet, nothing to install.
             </p>
           </>
         ) : (

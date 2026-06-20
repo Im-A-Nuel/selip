@@ -58,7 +58,7 @@ export async function loginWithGoogle(redirectURI: string): Promise<void> {
 }
 
 // Email magic-link / OTP login. Core auth (magic.auth), no OAuth extension
-// needed — works with just the publishable key.
+// needed, works with just the publishable key.
 export async function loginWithEmail(email: string): Promise<void> {
   const magic = await getMagic();
   await magic.auth.loginWithEmailOTP({ email });

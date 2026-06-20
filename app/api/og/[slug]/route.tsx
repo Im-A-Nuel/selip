@@ -1,4 +1,4 @@
-// GET /api/og/:slug — dynamic Open Graph image per gift.
+// GET /api/og/:slug : dynamic Open Graph image per gift.
 // Uses next/og ImageResponse. Text-only layout so no image fetching needed.
 
 import { ImageResponse } from "next/og";
