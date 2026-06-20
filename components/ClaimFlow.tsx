@@ -17,6 +17,7 @@ import { DEST_CHAINS, LOGIN_METHODS } from "@/lib/constants";
 import {
   getUserAddress,
   isMagicConfigured,
+  loginWithEmail,
   loginWithOAuth,
   resolveOAuthResult,
 } from "@/lib/magic";
@@ -69,6 +70,10 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
   // true while we resolve a returning Magic OAuth redirect on mount
   const [resolving, setResolving] = useState(false);
 
+  // inline email-OTP login (real Magic login that needs only the publishable key)
+  const [emailLoginOpen, setEmailLoginOpen] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+
   const name = view.recipient_name?.trim() || "";
 
   // On mount, finish any Magic OAuth login that redirected back to this page.
@@ -111,6 +116,12 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
     setBusy(true);
     setNote(null);
     try {
+      // Real email-OTP login: only needs the publishable key, no OAuth provider
+      // setup. Open the inline email form; Magic shows its own code modal.
+      if (isMagicConfigured() && method === "email") {
+        setEmailLoginOpen(true);
+        return;
+      }
       if (isMagicConfigured() && (method === "google" || method === "apple")) {
         const redirect = `${window.location.origin}${window.location.pathname}`;
         await loginWithOAuth(method, redirect);
@@ -120,6 +131,27 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
         setNote("Demo mode: sign-in is simulated because keys are not set.");
       }
       await afterLogin();
+    } catch (e) {
+      setNote((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitEmailLogin() {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail.trim())) {
+      setNote("Enter a valid email address.");
+      return;
+    }
+    setBusy(true);
+    setNote(null);
+    try {
+      // Magic renders its own OTP entry modal and resolves once verified.
+      await loginWithEmail(loginEmail.trim());
+      const addr = await getUserAddress().catch(() => null);
+      if (addr) setRecipientAddr(addr);
+      setEmailLoginOpen(false);
+      await afterLogin(addr ?? undefined);
     } catch (e) {
       setNote((e as Error).message);
     } finally {
@@ -424,20 +456,55 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
         )}
       </div>
 
-      <div className="flex w-full flex-col gap-2.5">
-        {LOGIN_METHODS.map((m) => (
+      {emailLoginOpen ? (
+        <div className="flex w-full flex-col gap-2.5">
+          <div className="glass flex w-full items-center rounded-2xl px-4 py-3">
+            <input
+              autoFocus
+              type="email"
+              inputMode="email"
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") submitEmailLogin();
+              }}
+              placeholder="your@email.com"
+              className="w-full bg-transparent text-ink outline-none placeholder:text-ink/30"
+            />
+          </div>
           <PillButton
-            key={m.id}
-            variant={m.id === "google" ? "dark" : "light"}
             loading={busy}
-            onClick={() => chooseLogin(m.id)}
+            onClick={submitEmailLogin}
             className="w-full py-3.5 text-[15px]"
           >
-            <BrandIcon id={m.id} />
-            {m.label}
+            Email me a code
           </PillButton>
-        ))}
-      </div>
+          <button
+            onClick={() => {
+              setEmailLoginOpen(false);
+              setNote(null);
+            }}
+            className="text-xs font-semibold text-ink/50 hover:text-ink"
+          >
+            ← Other ways to sign in
+          </button>
+        </div>
+      ) : (
+        <div className="flex w-full flex-col gap-2.5">
+          {LOGIN_METHODS.map((m) => (
+            <PillButton
+              key={m.id}
+              variant={m.id === "google" ? "dark" : "light"}
+              loading={busy}
+              onClick={() => chooseLogin(m.id)}
+              className="w-full py-3.5 text-[15px]"
+            >
+              <BrandIcon id={m.id} />
+              {m.label}
+            </PillButton>
+          ))}
+        </div>
+      )}
       {note && <p className="text-xs text-ink/50">{note}</p>}
     </Screen>
   );
