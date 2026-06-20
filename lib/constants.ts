@@ -88,6 +88,16 @@ export const SOURCE_ASSETS = [
 
 export type SourceAssetId = (typeof SOURCE_ASSETS)[number]["id"];
 
+// Deployed + verified GiftEscrow on Arbitrum Sepolia. The demo deploy ran a full
+// fund -> claim lifecycle, so the address page shows real Funded/Claimed events.
+// This is the clickable on-chain proof surfaced in the UI.
+export const ONCHAIN_PROOF = {
+  address: "0x2548dc9aAEf1be2530966D8FCD26261C11a684bd",
+  chain: "Arbitrum Sepolia",
+  explorer:
+    "https://sepolia.arbiscan.io/address/0x2548dc9aAEf1be2530966D8FCD26261C11a684bd",
+} as const;
+
 export function isOccasion(v: string): v is OccasionId {
   return OCCASIONS.some((o) => o.id === v);
 }

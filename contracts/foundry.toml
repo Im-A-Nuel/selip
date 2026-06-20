@@ -12,5 +12,8 @@ arbitrum = "${ARBITRUM_RPC_URL}"
 arbitrum_sepolia = "${ARBITRUM_SEPOLIA_RPC_URL}"
 
 [etherscan]
+# No explicit url: forge >=1.x defaults to the Etherscan V2 unified endpoint and
+# appends chainid from the chain field. Setting a url here disables that
+# auto-injection (the legacy arbiscan V1 endpoints are deprecated).
 arbitrum = { key = "${ARBISCAN_API_KEY}", chain = 42161 }
-arbitrum_sepolia = { key = "${ARBISCAN_API_KEY}", chain = 421614, url = "https://api-sepolia.arbiscan.io/api" }
+arbitrum_sepolia = { key = "${ARBISCAN_API_KEY}", chain = 421614 }

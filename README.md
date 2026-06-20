@@ -6,6 +6,17 @@ Selip lets anyone send a crypto gift to someone who has never touched crypto. Th
 
 Built solo for **UXmaxx Hackathon, General Track** (6 weeks).
 
+## On-chain proof
+
+`GiftEscrow` is deployed and **verified** on Arbitrum Sepolia. The demo deploy ran
+a full **fund → claim** lifecycle, so the address page shows real `Funded` and
+`Claimed` events — not just deployed bytecode.
+
+- Contract: [`0x2548dc9aAEf1be2530966D8FCD26261C11a684bd`](https://sepolia.arbiscan.io/address/0x2548dc9aAEf1be2530966D8FCD26261C11a684bd) (verified)
+- Deploy tx: `0x8a4794061a8393c16cbe7ff9ca3fa19b98c7a414d0936c65e56d1fd168ecfed7`
+- Fund tx: `0x8850507ee56ba94385bdd97e5b7f1149809c5e1cb295d2899db0eb4cb369954c`
+- Claim tx: `0x3380fc69a2c06ec2d5f06fce717b5ca175ad2e012002ca3ad9f7bc82761bd75e`
+
 ---
 
 ## The problem

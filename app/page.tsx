@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Badge, PillButton } from "@/components/ui";
+import { ONCHAIN_PROOF } from "@/lib/constants";
 
 const STEPS = [
   { art: "/art/how-create.webp", title: "Create", desc: "Pick an amount, add a personal message" },
@@ -88,7 +89,16 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="mt-10 flex flex-col items-center gap-1 border-t border-ink/5 pt-6 text-center">
+      <footer className="mt-10 flex flex-col items-center gap-2 border-t border-ink/5 pt-6 text-center">
+        <a
+          href={ONCHAIN_PROOF.explorer}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] font-bold text-ink/60 shadow-sm ring-1 ring-ink/5 transition-colors hover:text-coral-600"
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden />
+          Live escrow on {ONCHAIN_PROOF.chain} ↗
+        </a>
         <p className="text-xs font-semibold text-ink/30">
           Built for UXmaxx Hackathon · 2025
         </p>
