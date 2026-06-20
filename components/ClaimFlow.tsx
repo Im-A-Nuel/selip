@@ -30,6 +30,7 @@ interface PublicView {
   amount_display: string;
   message: string;
   card_theme: string;
+  card_image?: string;
   status: string;
   protection: "open" | "email" | "pin";
   unlock_at: string | null;
@@ -338,6 +339,7 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
             amountDisplay={view.amount_display}
             message={view.message}
             theme={view.card_theme}
+            cardImage={view.card_image}
             revealed={false}
           />
         </div>
@@ -361,6 +363,7 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
             amountDisplay={view.amount_display}
             message={view.message}
             theme={view.card_theme}
+            cardImage={view.card_image}
           />
         </div>
         <h1 className="text-2xl font-extrabold text-ink">This gift is yours 💛</h1>
@@ -515,6 +518,7 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
           amountDisplay={view.amount_display}
           message={view.message}
           theme={view.card_theme}
+          cardImage={view.card_image}
           revealed={false}
         />
       </div>

@@ -9,6 +9,7 @@ import { Confetti } from "@/components/Confetti";
 import { Chip, PillButton } from "@/components/ui";
 import { ShareButton } from "@/components/ShareButton";
 import { QrModal } from "@/components/QrModal";
+import { CardDrawer } from "@/components/CardDrawer";
 import { AssetIcon } from "@/components/AssetIcon";
 import { useToast } from "@/components/Toast";
 import {
@@ -28,6 +29,7 @@ import { getSenderId, rememberGiftId } from "@/lib/myGifts";
 interface Draft {
   occasion: OccasionId;
   customLabel: string;
+  cardImage: string;
   recipientName: string;
   amount: string;
   message: string;
@@ -48,6 +50,7 @@ export default function CreatePage() {
   const [draft, setDraft] = useState<Draft>({
     occasion: "birthday",
     customLabel: "",
+    cardImage: "",
     recipientName: "",
     amount: "",
     message: "",
@@ -157,6 +160,10 @@ export default function CreatePage() {
           occasion: draft.occasion,
           occasion_label:
             draft.occasion === "custom" ? draft.customLabel.trim() : undefined,
+          card_image:
+            draft.occasion === "custom" && draft.cardImage
+              ? draft.cardImage
+              : undefined,
           amount_display: amountDisplay,
           amount_value: Number(draft.amount) || undefined,
           message: draft.message || undefined,
@@ -239,6 +246,7 @@ export default function CreatePage() {
             amountDisplay={amountDisplay}
             message={draft.message}
             theme={draft.theme}
+            cardImage={draft.cardImage}
           />
         </div>
         <h2 className="text-2xl font-extrabold text-ink">Your gift is ready</h2>
@@ -335,6 +343,7 @@ export default function CreatePage() {
             amountDisplay={amountDisplay}
             message={draft.message}
             theme={draft.theme}
+            cardImage={draft.cardImage}
           />
         </div>
       </div>
@@ -363,17 +372,33 @@ export default function CreatePage() {
               ))}
             </div>
             {draft.occasion === "custom" && (
-              <div className="glass rise-in flex items-center rounded-2xl px-4 py-3">
-                <input
-                  autoFocus
-                  maxLength={40}
-                  value={draft.customLabel}
-                  onChange={(e) =>
-                    setDraft({ ...draft, customLabel: e.target.value })
-                  }
-                  placeholder="e.g. Anniversary, New job, Just because"
-                  className="w-full bg-transparent text-ink outline-none placeholder:text-ink/30"
-                />
+              <div className="rise-in flex flex-col gap-3">
+                <div className="glass flex items-center rounded-2xl px-4 py-3">
+                  <input
+                    autoFocus
+                    maxLength={40}
+                    value={draft.customLabel}
+                    onChange={(e) =>
+                      setDraft({ ...draft, customLabel: e.target.value })
+                    }
+                    placeholder="e.g. Anniversary, New job, Just because"
+                    className="w-full bg-transparent text-ink outline-none placeholder:text-ink/30"
+                  />
+                </div>
+                <div>
+                  <p className="mb-2 text-xs font-bold uppercase tracking-wide text-ink/45">
+                    Make the card yours (optional)
+                  </p>
+                  <CardDrawer
+                    value={draft.cardImage || undefined}
+                    onChange={(img) =>
+                      setDraft({ ...draft, cardImage: img ?? "" })
+                    }
+                  />
+                  <p className="mt-1.5 text-[11px] text-ink/40">
+                    Draw something, or upload a photo that means something to you.
+                  </p>
+                </div>
               </div>
             )}
           </Field>

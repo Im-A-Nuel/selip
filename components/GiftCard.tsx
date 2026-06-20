@@ -12,6 +12,8 @@ export interface GiftCardProps {
   message?: string;
   /** kept for API compatibility; visual is driven by occasion now */
   theme?: string;
+  /** custom occasion only: a drawn/uploaded image (data URL or http URL) */
+  cardImage?: string;
   revealed?: boolean;
 }
 
@@ -20,12 +22,15 @@ export function GiftCard({
   occasionLabel,
   amountDisplay,
   message,
+  cardImage,
   revealed = true,
 }: GiftCardProps) {
   const o = occasionById(occasion);
   const label =
     occasion === "custom" ? occasionLabel?.trim() || "Custom" : o.label;
-  const illustrated = Boolean(o.art);
+  const customImage =
+    occasion === "custom" && cardImage ? cardImage : null;
+  const illustrated = Boolean(o.art) || Boolean(customImage);
 
   // text colors differ between illustration (light top -> dark ink) and the
   // custom gradient (white text).
@@ -42,7 +47,18 @@ export function GiftCard({
           : { background: "linear-gradient(140deg, #ff7a5c 0%, #ffb020 100%)" }
       }
     >
-      {illustrated && o.art ? (
+      {customImage ? (
+        <>
+          {/* user-provided image: data URL, so a plain img (not next/image) */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={customImage}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-2/5 bg-gradient-to-b from-white/75 via-white/35 to-transparent" />
+        </>
+      ) : illustrated && o.art ? (
         <>
           <Image
             src={o.art}

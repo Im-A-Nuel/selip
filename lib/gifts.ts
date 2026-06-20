@@ -30,6 +30,8 @@ export interface Gift {
   amount_value?: number;
   message?: string;
   card_theme: string;
+  /** custom occasion only: drawn/uploaded card image (data URL) */
+  card_image?: string;
   rule_type: string;
   rule_param?: Record<string, unknown>;
   status: GiftStatus;
@@ -61,6 +63,7 @@ export interface CreateGiftInput {
   amount_value?: number;
   message?: string;
   card_theme: string;
+  card_image?: string;
   rule_type: string;
   rule_param?: Record<string, unknown>;
   protection?: Protection;
@@ -135,6 +138,18 @@ export function validateCreateInput(
   if (!input.card_theme || !isCardTheme(input.card_theme)) {
     return { ok: false, error: "Invalid card theme." };
   }
+  // Custom card image: must be an image data URL, capped so the row stays small.
+  if (input.card_image) {
+    if (
+      typeof input.card_image !== "string" ||
+      !input.card_image.startsWith("data:image/")
+    ) {
+      return { ok: false, error: "Card image must be an image." };
+    }
+    if (input.card_image.length > 1_600_000) {
+      return { ok: false, error: "Card image is too large." };
+    }
+  }
   if (!input.rule_type || !isRuleType(input.rule_type)) {
     return { ok: false, error: "Invalid rule type." };
   }
@@ -177,6 +192,7 @@ export function toPublicView(gift: Gift) {
     amount_display: gift.amount_display,
     message: gift.message ?? "",
     card_theme: gift.card_theme,
+    card_image: gift.card_image ?? "",
     status: gift.status,
     // claim UI needs to know which gate to present, never the secret itself
     protection: gift.protection ?? "open",

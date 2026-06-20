@@ -48,11 +48,19 @@ export async function POST(req: NextRequest) {
       ? body.amount_value
       : undefined;
 
+  const cardImage =
+    body.occasion === "custom" &&
+    typeof body.card_image === "string" &&
+    body.card_image.startsWith("data:image/")
+      ? body.card_image
+      : undefined;
+
   const candidate: Partial<CreateGiftInput> = {
     occasion: body.occasion,
     occasion_label: body.occasion_label,
     amount_display: body.amount_display,
     amount_value: amountValue,
+    card_image: cardImage,
     message: body.message,
     card_theme: body.card_theme,
     rule_type: body.rule_type,

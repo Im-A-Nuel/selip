@@ -67,6 +67,7 @@ class MemoryRepo implements GiftRepo {
       amount_value: input.amount_value,
       message: input.message,
       card_theme: input.card_theme,
+      card_image: input.card_image,
       rule_type: input.rule_type,
       rule_param: input.rule_param,
       sender_id: input.sender_id,
@@ -162,6 +163,9 @@ class SupabaseRepo implements GiftRepo {
         sender_id: input.sender_id ?? null,
         recipient_name: input.recipient_name ?? null,
         status: "draft" as GiftStatus,
+        // Only sent when present so non-custom gifts still insert on a DB that
+        // has not run the card_image migration yet.
+        ...(input.card_image ? { card_image: input.card_image } : {}),
       })
       .select()
       .single();
