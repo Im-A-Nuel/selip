@@ -4,6 +4,7 @@
 
 import type { NextRequest } from "next/server";
 import { getRepo } from "@/lib/db";
+import { notifyClaim } from "@/lib/email";
 import { isExpired, isTimeLocked, normalizeEmail } from "@/lib/gifts";
 import { safeEqual, sha256Hex } from "@/lib/hash";
 import {
@@ -85,6 +86,11 @@ export async function POST(
       claimed_at: new Date().toISOString(),
     });
     if (!updated) return ERRORS.NOT_FOUND();
+
+    // Notify the sender (best-effort; no-op without RESEND_API_KEY/sender email).
+    const base = process.env.NEXT_PUBLIC_APP_URL ?? "";
+    await notifyClaim(updated, `${base}/g/${updated.claim_slug}`);
+
     return ok({ status: "claimed" });
   } catch (e) {
     return ERRORS.SERVER((e as Error).message);

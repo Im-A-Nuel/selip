@@ -27,6 +27,7 @@ export async function GET(
   let amount = "A gift";
   let label = "for you";
   let emoji = "🎁";
+  let cardImage: string | null = null;
 
   try {
     const gift = await getRepo().getBySlug(slug);
@@ -38,6 +39,9 @@ export async function GET(
           ? gift.occasion_label
           : occ.label;
       emoji = OCCASION_EMOJI[gift.occasion] ?? "🎁";
+      if (gift.occasion === "custom" && gift.card_image) {
+        cardImage = gift.card_image;
+      }
     }
   } catch {
     // Render fallback OG on any error.
@@ -58,6 +62,32 @@ export async function GET(
           position: "relative",
         }}
       >
+        {cardImage ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={cardImage}
+              alt=""
+              width={1200}
+              height={630}
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background:
+                  "linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.55) 100%)",
+              }}
+            />
+          </>
+        ) : null}
         {/* Card shape */}
         <div
           style={{

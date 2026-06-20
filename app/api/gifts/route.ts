@@ -43,6 +43,11 @@ export async function POST(req: NextRequest) {
       ? body.recipient_name.trim().slice(0, 40)
       : undefined;
 
+  const senderEmail =
+    typeof body.sender_email === "string" && body.sender_email.trim().length > 0
+      ? normalizeEmail(body.sender_email).slice(0, 120)
+      : undefined;
+
   const amountValue =
     typeof body.amount_value === "number" && Number.isFinite(body.amount_value)
       ? body.amount_value
@@ -73,6 +78,7 @@ export async function POST(req: NextRequest) {
     pin_hash,
     unlock_at: body.unlock_at || undefined,
     sender_id: senderId,
+    sender_email: senderEmail,
     recipient_name: recipientName,
   };
 

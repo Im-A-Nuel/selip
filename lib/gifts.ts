@@ -46,6 +46,8 @@ export interface Gift {
   thanks_message?: string;
   /** client-generated UUID identifying the sender's session/browser */
   sender_id?: string;
+  /** optional sender email, to notify them when the gift is opened */
+  sender_email?: string;
   /** display name of the recipient (personalises the claim page) */
   recipient_name?: string;
   source_chain?: string;
@@ -71,6 +73,7 @@ export interface CreateGiftInput {
   pin_hash?: string;
   unlock_at?: string;
   sender_id?: string;
+  sender_email?: string;
   recipient_name?: string;
 }
 
@@ -171,6 +174,9 @@ export function validateCreateInput(
   if (input.unlock_at) {
     const t = Date.parse(input.unlock_at);
     if (Number.isNaN(t)) return { ok: false, error: "Invalid unlock date." };
+  }
+  if (input.sender_email && !isValidEmail(input.sender_email)) {
+    return { ok: false, error: "Enter a valid email for notifications." };
   }
   return { ok: true };
 }

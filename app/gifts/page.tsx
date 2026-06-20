@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { PillButton } from "@/components/ui";
+import { QrModal } from "@/components/QrModal";
 import { useToast } from "@/components/Toast";
 import { getSenderId, getGiftIds } from "@/lib/myGifts";
 import { occasionById } from "@/lib/constants";
@@ -13,6 +14,8 @@ interface Item {
   claim_slug: string;
   occasion: string;
   occasion_label: string;
+  recipient_name: string;
+  card_image: string;
   amount_display: string;
   status: string;
   rule_type: string;
@@ -56,6 +59,7 @@ export default function MyGiftsPage() {
   const toast = useToast();
   const [items, setItems] = useState<Item[] | null>(null);
   const [refunding, setRefunding] = useState<string | null>(null);
+  const [qrSlug, setQrSlug] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const senderId = getSenderId();
@@ -172,13 +176,22 @@ export default function MyGiftsPage() {
             return (
               <div key={g.id} style={{ "--i": idx } as React.CSSProperties} className="glass rounded-3xl p-4">
                 <div className="flex items-start gap-3">
-                  <Image
-                    src={o.icon}
-                    alt=""
-                    width={40}
-                    height={40}
-                    className="mt-0.5 h-10 w-10 shrink-0 object-contain"
-                  />
+                  {g.occasion === "custom" && g.card_image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={g.card_image}
+                      alt=""
+                      className="mt-0.5 h-10 w-10 shrink-0 rounded-lg object-cover ring-1 ring-ink/10"
+                    />
+                  ) : (
+                    <Image
+                      src={o.icon}
+                      alt=""
+                      width={40}
+                      height={40}
+                      className="mt-0.5 h-10 w-10 shrink-0 object-contain"
+                    />
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="truncate text-sm font-bold text-ink">
@@ -194,6 +207,11 @@ export default function MyGiftsPage() {
                         {statusLabel}
                       </span>
                     </div>
+                    {g.recipient_name && (
+                      <p className="text-[11px] font-semibold text-ink/45">
+                        To {g.recipient_name}
+                      </p>
+                    )}
                     <span className="text-lg font-extrabold text-ink">
                       {g.amount_display}
                     </span>
@@ -203,12 +221,20 @@ export default function MyGiftsPage() {
                       </p>
                     )}
                   </div>
-                  <button
-                    onClick={() => copyLink(g.claim_slug)}
-                    className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-ink shadow-sm ring-1 ring-ink/5"
-                  >
-                    Copy link
-                  </button>
+                  <div className="flex shrink-0 flex-col items-end gap-1.5">
+                    <button
+                      onClick={() => copyLink(g.claim_slug)}
+                      className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-ink shadow-sm ring-1 ring-ink/5"
+                    >
+                      Copy link
+                    </button>
+                    <button
+                      onClick={() => setQrSlug(g.claim_slug)}
+                      className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-coral-600 shadow-sm ring-1 ring-ink/5"
+                    >
+                      QR
+                    </button>
+                  </div>
                 </div>
 
                 {g.thanks_message && (
@@ -230,6 +256,13 @@ export default function MyGiftsPage() {
             );
           })}
         </div>
+      )}
+
+      {qrSlug && (
+        <QrModal
+          value={`${window.location.origin}/g/${qrSlug}`}
+          onClose={() => setQrSlug(null)}
+        />
       )}
     </main>
   );

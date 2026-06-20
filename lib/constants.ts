@@ -50,10 +50,10 @@ export const PROTECTION_OPTIONS = [
 export type ProtectionId = (typeof PROTECTION_OPTIONS)[number]["id"];
 
 // Sign-in methods offered to the recipient. Brand glyph is rendered by
-// <BrandIcon id=…/>, so no icon field is kept here.
+// <BrandIcon id=…/>, so no icon field is kept here. Apple is omitted: it needs
+// a paid Apple Developer setup in Magic that isn't worth it for the demo.
 export const LOGIN_METHODS = [
   { id: "google", label: "Continue with Google" },
-  { id: "apple", label: "Continue with Apple" },
   { id: "email", label: "Use email instead" },
 ] as const;
 

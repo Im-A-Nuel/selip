@@ -31,6 +31,7 @@ interface Draft {
   customLabel: string;
   cardImage: string;
   recipientName: string;
+  senderEmail: string;
   amount: string;
   message: string;
   theme: CardThemeId;
@@ -52,6 +53,7 @@ export default function CreatePage() {
     customLabel: "",
     cardImage: "",
     recipientName: "",
+    senderEmail: "",
     amount: "",
     message: "",
     theme: "sunrise",
@@ -179,6 +181,7 @@ export default function CreatePage() {
             ? new Date(draft.unlockAt).toISOString()
             : undefined,
           sender_id: getSenderId(),
+          sender_email: draft.senderEmail.trim() || undefined,
           recipient_name: draft.recipientName.trim() || undefined,
         }),
       });
@@ -462,6 +465,24 @@ export default function CreatePage() {
             />
             <p className="-mt-1 text-right text-xs text-ink/40">
               {draft.message.length}/280
+            </p>
+            <div className="glass flex items-center gap-2 rounded-2xl px-4 py-3">
+              <span className="shrink-0 text-sm font-semibold text-ink/40">
+                Notify me:
+              </span>
+              <input
+                type="email"
+                inputMode="email"
+                value={draft.senderEmail}
+                onChange={(e) =>
+                  setDraft({ ...draft, senderEmail: e.target.value })
+                }
+                placeholder="your@email.com (optional)"
+                className="w-full bg-transparent text-ink outline-none placeholder:text-ink/30"
+              />
+            </div>
+            <p className="-mt-2 text-[11px] text-ink/40">
+              We'll email you when the gift is opened.
             </p>
           </Field>
         )}

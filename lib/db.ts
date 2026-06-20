@@ -71,6 +71,7 @@ class MemoryRepo implements GiftRepo {
       rule_type: input.rule_type,
       rule_param: input.rule_param,
       sender_id: input.sender_id,
+      sender_email: input.sender_email,
       recipient_name: input.recipient_name,
       status: "draft",
       created_at: new Date().toISOString(),
@@ -163,9 +164,10 @@ class SupabaseRepo implements GiftRepo {
         sender_id: input.sender_id ?? null,
         recipient_name: input.recipient_name ?? null,
         status: "draft" as GiftStatus,
-        // Only sent when present so non-custom gifts still insert on a DB that
-        // has not run the card_image migration yet.
+        // Only sent when present so gifts still insert on a DB that has not run
+        // the card_image / sender_email migrations yet.
         ...(input.card_image ? { card_image: input.card_image } : {}),
+        ...(input.sender_email ? { sender_email: input.sender_email } : {}),
       })
       .select()
       .single();
