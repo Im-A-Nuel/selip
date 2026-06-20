@@ -72,8 +72,18 @@ export async function resolveOAuthResult() {
 
 export async function getUserAddress(): Promise<string | null> {
   const magic = await getMagic();
-  const info = await magic.user.getInfo();
-  return info?.publicAddress ?? null;
+  // Primary: user metadata. publicAddress can be null right after some logins.
+  try {
+    const info = await magic.user.getInfo();
+    if (info?.publicAddress) return info.publicAddress;
+  } catch {}
+  // Fallback: ask the embedded wallet's EIP-1193 provider directly. This is
+  // reliable once the user is signed in (email OTP or OAuth).
+  try {
+    const accounts = await magic.rpcProvider.request({ method: "eth_accounts" });
+    if (Array.isArray(accounts) && accounts[0]) return accounts[0] as string;
+  } catch {}
+  return null;
 }
 
 // Verified email of the signed-in user (email OTP or the OAuth account email).
