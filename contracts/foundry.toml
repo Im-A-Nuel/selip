@@ -12,4 +12,5 @@ arbitrum = "${ARBITRUM_RPC_URL}"
 arbitrum_sepolia = "${ARBITRUM_SEPOLIA_RPC_URL}"
 
 [etherscan]
-arbitrum = { key = "${ARBISCAN_API_KEY}" }
+arbitrum = { key = "${ARBISCAN_API_KEY}", chain = 42161 }
+arbitrum_sepolia = { key = "${ARBISCAN_API_KEY}", chain = 421614, url = "https://api-sepolia.arbiscan.io/api" }

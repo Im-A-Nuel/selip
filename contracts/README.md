@@ -22,4 +22,29 @@ automatically without a manual sender signature. Cross-chain routing for
 funding and cash-out is handled by the Particle Universal Accounts SDK, not
 this contract.
 
-> TODO(week1): scaffold the deploy toolchain (Foundry/Hardhat) once chosen.
+## Build & test
+
+Foundry toolchain (run inside WSL on Windows).
+
+```bash
+cd contracts
+cp .env.example .env          # fill PRIVATE_KEY, RPC, ARBISCAN_API_KEY
+forge install foundry-rs/forge-std   # only if lib/forge-std is missing
+forge test                    # 7 passing
+```
+
+## Deploy to Arbitrum Sepolia (testnet)
+
+Prereqs: a deployer wallet with Arbitrum Sepolia ETH (faucet:
+https://www.alchemy.com/faucets/arbitrum-sepolia), and an Arbiscan API key.
+
+```bash
+# bytecode only
+forge script script/Deploy.s.sol --rpc-url arbitrum_sepolia --broadcast --verify
+
+# OR full lifecycle (deploy + fund + claim) for clickable event proof
+forge script script/Demo.s.sol --rpc-url arbitrum_sepolia --broadcast
+```
+
+Record the deployed address + tx hashes; they are the on-chain proof. Mainnet
+deploy uses `--rpc-url arbitrum` once the demo is validated on testnet.
