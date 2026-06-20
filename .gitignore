@@ -59,3 +59,4 @@ yarn-error.log*
 
 # internal AI agent instructions (kept local, not for public repo)
 CLAUDE.md
+.commitmsg.tmp
