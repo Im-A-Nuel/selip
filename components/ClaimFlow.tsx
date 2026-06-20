@@ -19,7 +19,6 @@ import {
   isMagicConfigured,
   loginWithEmail,
   loginWithOAuth,
-  resolveOAuthResult,
 } from "@/lib/magic";
 
 type Phase = "closed" | "gate" | "opening" | "revealed";
@@ -76,22 +75,25 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
 
   const name = view.recipient_name?.trim() || "";
 
-  // On mount, finish any Magic OAuth login that redirected back to this page.
-  // Without this, a real (configured) login would return here and stall on the
-  // closed screen. Demo mode (no keys) skips redirect entirely.
+  // After a Google/Apple OAuth round-trip, the static /auth/callback page
+  // finalizes the Magic login and forwards back here with a sessionStorage flag.
+  // We only continue the claim when that flag is set (not on a plain visit).
   useEffect(() => {
     if (!isMagicConfigured()) return;
+    let flag: string | null = null;
+    try {
+      flag = sessionStorage.getItem("selip.justLoggedIn");
+      if (flag) sessionStorage.removeItem("selip.justLoggedIn");
+    } catch {}
+    if (!flag) return;
     let cancelled = false;
     (async () => {
       setResolving(true);
       try {
-        const result = await resolveOAuthResult();
-        if (cancelled || !result) return;
         const addr = await getUserAddress().catch(() => null);
+        if (cancelled) return;
         if (addr) setRecipientAddr(addr);
         await afterLogin(addr ?? undefined);
-      } catch {
-        // Not a redirect return (or it failed): show the normal closed screen.
       } finally {
         if (!cancelled) setResolving(false);
       }
@@ -123,7 +125,12 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
         return;
       }
       if (isMagicConfigured() && (method === "google" || method === "apple")) {
-        const redirect = `${window.location.origin}${window.location.pathname}`;
+        // Remember where to return; redirect to the STATIC callback path so the
+        // OAuth redirect_uri is stable (registerable in Google + Magic).
+        try {
+          sessionStorage.setItem("selip.returnPath", window.location.pathname);
+        } catch {}
+        const redirect = `${window.location.origin}/auth/callback`;
         await loginWithOAuth(method, redirect);
         return;
       }
