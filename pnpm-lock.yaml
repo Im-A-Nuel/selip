@@ -8,9 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@magic-ext/oauth':
-        specifier: ^24.0.0
-        version: 24.0.0
+      '@magic-ext/oauth2':
+        specifier: ^15.8.0
+        version: 15.8.0
       '@magic-sdk/commons':
         specifier: ^26.0.0
         version: 26.0.0(@magic-sdk/provider@33.7.1(localforage@1.10.0))(@magic-sdk/types@27.7.1)
@@ -269,9 +269,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@magic-ext/oauth@24.0.0':
-    resolution: {integrity: sha512-EjVaVFFyfPYUSxVD2h7rYP2DpxJBvKCiI6t92DFMoOkeysGrGocMaUb/bYi562oYZz/BFcFzDZARmzgWhpiHmQ==}
-    deprecated: This package is deprecated. Please use @magic-ext/oauth2 instead.
+  '@magic-ext/oauth2@15.8.0':
+    resolution: {integrity: sha512-AcoGzauJXu6uJJV1lB/uL/m4XbUdvF6pi7slkT9B2SmH7XmVEFhrZYArWteCxjm2Jga8MdwDTLDNaoFDpDGhZA==}
 
   '@magic-sdk/commons@26.0.0':
     resolution: {integrity: sha512-km0E8JyTppNm4l3OKqVnNgnf9lrJEmoJobByZDuVolIa0pBLwszw2A62YNRxDO29qq24iXCNLsk89vxTGXG7FQ==}
@@ -1583,7 +1582,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@magic-ext/oauth@24.0.0':
+  '@magic-ext/oauth2@15.8.0':
     dependencies:
       crypto-js: 4.2.0
 

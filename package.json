@@ -13,7 +13,7 @@
     "test": "echo \"no tests yet\" && exit 0"
   },
   "dependencies": {
-    "@magic-ext/oauth": "^24.0.0",
+    "@magic-ext/oauth2": "^15.8.0",
     "@magic-sdk/commons": "^26.0.0",
     "@particle-network/universal-account-sdk": "^1.1.1",
     "@supabase/supabase-js": "^2.108.1",

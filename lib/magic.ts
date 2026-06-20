@@ -3,8 +3,11 @@
 // Magic embedded wallet: recipient onboarding via Google/email login.
 // The recipient's initial signer before EOA -> UA upgrade (EIP-7702) at claim.
 // Browser-only; lazily imports the SDK so server bundles stay clean.
-
-import type { OAuthProvider } from "@magic-ext/oauth";
+//
+// Social login uses the OAuth 2.0 flow (@magic-ext/oauth2): the dashboard
+// "Social Login" setup with your own Google client is the OAuth2 flow, so the
+// deprecated v1 @magic-ext/oauth verify endpoint returns 401. Email OTP is core
+// auth (magic.auth) and is independent of the OAuth extension.
 
 let magicInstance: any = null;
 
@@ -25,9 +28,11 @@ async function getMagic() {
     throw new Error("Magic hanya tersedia di browser.");
   }
   if (magicInstance) return magicInstance;
+  // @magic-ext/oauth2 exports its extension class as `OAuthExtension` (it
+  // registers under the `magic.oauth2` namespace).
   const [{ Magic }, { OAuthExtension }] = await Promise.all([
     import("magic-sdk"),
-    import("@magic-ext/oauth"),
+    import("@magic-ext/oauth2"),
   ]);
   magicInstance = new Magic(getKey(), {
     extensions: [new OAuthExtension()],
@@ -41,8 +46,8 @@ export async function loginWithOAuth(
   redirectURI: string,
 ): Promise<void> {
   const magic = await getMagic();
-  await magic.oauth.loginWithRedirect({
-    provider: provider as OAuthProvider,
+  await magic.oauth2.loginWithRedirect({
+    provider: provider as any,
     redirectURI,
   });
 }
@@ -52,7 +57,8 @@ export async function loginWithGoogle(redirectURI: string): Promise<void> {
   return loginWithOAuth("google", redirectURI);
 }
 
-// Email magic-link login (fallback when Google is unavailable).
+// Email magic-link / OTP login. Core auth (magic.auth), no OAuth extension
+// needed — works with just the publishable key.
 export async function loginWithEmail(email: string): Promise<void> {
   const magic = await getMagic();
   await magic.auth.loginWithEmailOTP({ email });
@@ -61,7 +67,7 @@ export async function loginWithEmail(email: string): Promise<void> {
 // Resolve the OAuth redirect; returns the user's metadata + signer info.
 export async function resolveOAuthResult() {
   const magic = await getMagic();
-  return magic.oauth.getRedirectResult();
+  return magic.oauth2.getRedirectResult();
 }
 
 export async function getUserAddress(): Promise<string | null> {
