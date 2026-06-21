@@ -60,6 +60,25 @@ export default function MyGiftsPage() {
   const [items, setItems] = useState<Item[] | null>(null);
   const [refunding, setRefunding] = useState<string | null>(null);
   const [qrSlug, setQrSlug] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | "waiting" | "opened">("all");
+  const [visible, setVisible] = useState(10);
+  const [openThanks, setOpenThanks] = useState<string | null>(null);
+
+  const PAGE = 10;
+  const all = items ?? [];
+  const filtered = all.filter((g) =>
+    filter === "waiting"
+      ? g.status === "funded"
+      : filter === "opened"
+        ? g.status === "claimed"
+        : true,
+  );
+  const shown = filtered.slice(0, visible);
+
+  function pickFilter(f: "all" | "waiting" | "opened") {
+    setFilter(f);
+    setVisible(PAGE);
+  }
 
   const load = useCallback(async () => {
     const senderId = getSenderId();
@@ -156,13 +175,44 @@ export default function MyGiftsPage() {
           <p className="text-xs text-ink/35">No wallet needed on either side.</p>
         </div>
       ) : (
-        <div className="stagger flex flex-col gap-3">
-          {items.map((g, idx) => {
-            const o = occasionById(g.occasion);
-            const label =
-              g.occasion === "custom"
-                ? g.occasion_label || "Custom"
-                : o.label;
+        <>
+          {/* Filter tabs */}
+          <div className="mb-4 flex gap-2">
+            {([
+              ["all", "All", all.length],
+              ["waiting", "Waiting", all.filter((g) => g.status === "funded").length],
+              ["opened", "Opened", all.filter((g) => g.status === "claimed").length],
+            ] as const).map(([key, lbl, count]) => (
+              <button
+                key={key}
+                onClick={() => pickFilter(key)}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors ${
+                  filter === key
+                    ? "bg-ink text-white"
+                    : "bg-white/70 text-ink/60 ring-1 ring-ink/5 hover:bg-white"
+                }`}
+              >
+                {lbl}
+                <span className={filter === key ? "text-white/60" : "text-ink/35"}>
+                  {" "}
+                  {count}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {filtered.length === 0 ? (
+            <p className="mt-8 text-center text-sm text-ink/45">
+              No {filter} gifts.
+            </p>
+          ) : (
+            <div className="stagger flex flex-col gap-3">
+              {shown.map((g, idx) => {
+                const o = occasionById(g.occasion);
+                const label =
+                  g.occasion === "custom"
+                    ? g.occasion_label || "Custom"
+                    : o.label;
             const isWaiting = g.status === "funded" && !g.locked && !g.expired;
             const statusLabel =
               g.expired && g.status === "funded"
@@ -174,7 +224,7 @@ export default function MyGiftsPage() {
               g.status === "funded" && g.rule_type === "refund_if_unclaimed";
 
             return (
-              <div key={g.id} style={{ "--i": idx } as React.CSSProperties} className="glass rounded-3xl p-4">
+              <div key={g.id} style={{ "--i": idx } as React.CSSProperties} className="glass rounded-3xl p-3.5">
                 <div className="flex items-start gap-3">
                   {g.occasion === "custom" && g.card_image ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -238,24 +288,43 @@ export default function MyGiftsPage() {
                 </div>
 
                 {g.thanks_message && (
-                  <p className="mt-3 rounded-2xl bg-white/70 px-3 py-2 text-sm text-ink/80 ring-1 ring-black/5">
-                    💌 &ldquo;{g.thanks_message}&rdquo;
-                  </p>
+                  <button
+                    onClick={() =>
+                      setOpenThanks(openThanks === g.id ? null : g.id)
+                    }
+                    className="mt-2 w-full rounded-2xl bg-white/70 px-3 py-2 text-left text-sm text-ink/80 ring-1 ring-black/5"
+                  >
+                    <span
+                      className={openThanks === g.id ? "" : "line-clamp-1"}
+                    >
+                      💌 &ldquo;{g.thanks_message}&rdquo;
+                    </span>
+                  </button>
                 )}
 
                 {canRefund && (
                   <button
                     disabled={refunding === g.id}
                     onClick={() => requestRefund(g.id)}
-                    className="mt-3 w-full rounded-2xl border border-red-200 bg-red-50 py-2.5 text-sm font-semibold text-red-600 transition-opacity hover:opacity-80 disabled:opacity-40"
+                    className="mt-2 w-full rounded-2xl border border-red-200 bg-red-50 py-2.5 text-sm font-semibold text-red-600 transition-opacity hover:opacity-80 disabled:opacity-40"
                   >
                     {refunding === g.id ? "Requesting refund…" : "Refund, I changed my mind"}
                   </button>
                 )}
               </div>
             );
-          })}
-        </div>
+              })}
+            </div>
+          )}
+          {filtered.length > visible && (
+            <button
+              onClick={() => setVisible((v) => v + PAGE)}
+              className="mt-4 w-full rounded-2xl bg-white/70 py-3 text-sm font-semibold text-ink/70 ring-1 ring-ink/5 hover:bg-white"
+            >
+              Show more ({filtered.length - visible})
+            </button>
+          )}
+        </>
       )}
 
       {qrSlug && (
