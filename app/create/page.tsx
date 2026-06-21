@@ -9,7 +9,7 @@ import { Confetti } from "@/components/Confetti";
 import { Chip, PillButton } from "@/components/ui";
 import { ShareButton } from "@/components/ShareButton";
 import { QrModal } from "@/components/QrModal";
-import { CardDrawer } from "@/components/CardDrawer";
+import { CardEditor } from "@/components/CardEditor";
 import { AssetIcon } from "@/components/AssetIcon";
 import { useToast } from "@/components/Toast";
 import {
@@ -68,6 +68,7 @@ export default function CreatePage() {
   const [claimSlug, setClaimSlug] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [dir, setDir] = useState<1 | -1>(1);
 
   // Funding (demo) state
@@ -392,15 +393,35 @@ export default function CreatePage() {
                   <p className="mb-2 text-xs font-bold uppercase tracking-wide text-ink/45">
                     Make the card yours (optional)
                   </p>
-                  <CardDrawer
-                    value={draft.cardImage || undefined}
-                    onChange={(img) =>
-                      setDraft({ ...draft, cardImage: img ?? "" })
-                    }
-                  />
-                  <p className="mt-1.5 text-[11px] text-ink/40">
-                    Draw something, or upload a photo that means something to you.
-                  </p>
+                  {draft.cardImage ? (
+                    <div className="flex items-center gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={draft.cardImage}
+                        alt=""
+                        className="h-20 w-16 shrink-0 rounded-xl object-cover ring-1 ring-ink/10"
+                      />
+                      <button
+                        onClick={() => setEditorOpen(true)}
+                        className="rounded-full bg-ink/5 px-4 py-2 text-sm font-semibold text-ink/70 hover:bg-ink/10"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => setDraft({ ...draft, cardImage: "" })}
+                        className="text-sm font-semibold text-coral-600"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setEditorOpen(true)}
+                      className="glass flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-ink/15 py-4 text-sm font-semibold text-ink/60 hover:-translate-y-0.5"
+                    >
+                      🎨 Draw or add a photo
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -720,6 +741,17 @@ export default function CreatePage() {
           </PillButton>
         )}
       </div>
+
+      {editorOpen && (
+        <CardEditor
+          value={draft.cardImage || undefined}
+          onSave={(img) => {
+            setDraft({ ...draft, cardImage: img ?? "" });
+            setEditorOpen(false);
+          }}
+          onClose={() => setEditorOpen(false)}
+        />
+      )}
     </main>
   );
 }
