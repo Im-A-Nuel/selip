@@ -103,9 +103,6 @@ export default function Home() {
           <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden />
           Live escrow on {ONCHAIN_PROOF.chain} ↗
         </a>
-        <p className="text-xs font-semibold text-ink/30">
-          Built for UXmaxx Hackathon · 2025
-        </p>
         <p className="text-[11px] text-ink/20">
           Powered by Particle Network · Magic · ZeroDev · Arbitrum
         </p>
