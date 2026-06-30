@@ -21,8 +21,12 @@ export default function Home() {
           height={800}
           priority
           sizes="(max-width: 480px) 90vw, 384px"
-          className="h-auto w-full"
+          className="h-auto w-full origin-right scale-[1.12]"
         />
+        {/* Fade side edges into the panel so the cropped hands meet the border
+            cleanly with no empty gap. */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-[#fdeee9] to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[#fdeee9] to-transparent" />
       </div>
 
       {/* Hero copy */}

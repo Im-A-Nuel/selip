@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { PillButton } from "@/components/ui";
 import { QrModal } from "@/components/QrModal";
+import { BackButton } from "@/components/BackButton";
 import { useToast } from "@/components/Toast";
 import { getSenderId, getGiftIds } from "@/lib/myGifts";
 import { occasionById } from "@/lib/constants";
@@ -138,13 +139,7 @@ export default function MyGiftsPage() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 pb-10 pt-10">
       <div className="mb-6 flex items-center gap-3">
-        <Link
-          href="/"
-          className="soft flex h-9 w-9 items-center justify-center rounded-full text-ink/60"
-          aria-label="Back to home"
-        >
-          ←
-        </Link>
+        <BackButton href="/" label="Back to home" />
         <h1 className="text-xl font-extrabold tracking-tight text-ink">
           My gifts
         </h1>

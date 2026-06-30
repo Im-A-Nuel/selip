@@ -10,6 +10,7 @@ import { Chip, PillButton } from "@/components/ui";
 import { ShareButton } from "@/components/ShareButton";
 import { QrModal } from "@/components/QrModal";
 import { CardEditor } from "@/components/CardEditor";
+import { BackButton } from "@/components/BackButton";
 import { AssetIcon } from "@/components/AssetIcon";
 import { useToast } from "@/components/Toast";
 import {
@@ -320,21 +321,9 @@ export default function CreatePage() {
     <main className="mx-auto flex min-h-dvh max-w-md flex-col px-6 pb-8 pt-10">
       <div className="mb-6 flex items-center gap-3">
         {step === 0 ? (
-          <Link
-            href="/"
-            className="soft flex h-9 w-9 items-center justify-center rounded-full text-ink/60"
-            aria-label="Back to home"
-          >
-            ←
-          </Link>
+          <BackButton href="/" label="Back to home" />
         ) : (
-          <button
-            onClick={back}
-            className="soft flex h-9 w-9 items-center justify-center rounded-full text-ink/60"
-            aria-label="Back"
-          >
-            ←
-          </button>
+          <BackButton onClick={back} />
         )}
         <Stepper total={STEPS.length} current={step} onStep={goto} />
       </div>
