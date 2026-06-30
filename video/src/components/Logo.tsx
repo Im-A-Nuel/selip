@@ -1,6 +1,7 @@
+import { Img, staticFile } from "remotion";
 import { COLORS, FONT } from "../theme";
 
-// Selip wordmark with a small gift glyph. size scales everything.
+// Selip wordmark using the real app icon. size scales everything.
 export const Logo: React.FC<{ size?: number; mono?: boolean }> = ({
   size = 120,
   mono,
@@ -13,21 +14,15 @@ export const Logo: React.FC<{ size?: number; mono?: boolean }> = ({
       gap: size * 0.22,
     }}
   >
-    <div
+    <Img
+      src={staticFile("logo.png")}
       style={{
         width: size,
         height: size,
-        borderRadius: size * 0.3,
-        background: `linear-gradient(135deg, ${COLORS.coral}, ${COLORS.amber})`,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: size * 0.56,
-        boxShadow: "0 20px 40px -16px rgba(249,96,61,0.6)",
+        borderRadius: size * 0.26,
+        boxShadow: "0 20px 40px -16px rgba(249,96,61,0.55)",
       }}
-    >
-      🎁
-    </div>
+    />
     <span
       style={{
         fontSize: size * 0.82,

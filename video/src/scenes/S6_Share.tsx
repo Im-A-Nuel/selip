@@ -60,7 +60,7 @@ export const S6_Share: React.FC = () => {
                 marginBottom: 20,
               }}
             >
-              Your gift is ready 🎉
+              Your gift is ready
             </div>
 
             <Glass

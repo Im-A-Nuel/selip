@@ -3,9 +3,15 @@ import { Scene } from "../components/Scene";
 import { PhoneFrame } from "../components/PhoneFrame";
 import { Caption } from "../components/Caption";
 import { Chip, PillButton, Glass } from "../components/ui";
+import { Art } from "../components/Img";
 import { COLORS, FONT } from "../theme";
 
-const OCCASIONS = ["🎂 Birthday", "☕ Thanks", "🎉 Congrats", "💌 Just because"];
+const OCCASIONS: { art: string; label: string }[] = [
+  { art: "occ-birthday", label: "Birthday" },
+  { art: "occ-custom", label: "Thanks" },
+  { art: "occ-graduation", label: "Congrats" },
+  { art: "occ-holiday", label: "Just because" },
+];
 
 export const S4_Create: React.FC = () => {
   const frame = useCurrentFrame();
@@ -61,11 +67,14 @@ export const S4_Create: React.FC = () => {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 38,
                   flexShrink: 0,
+                  overflow: "hidden",
                 }}
               >
-                ☕
+                <Art
+                  name="occ-custom"
+                  style={{ width: 52, height: 52, objectFit: "contain" }}
+                />
               </div>
               <div style={{ flex: 1 }}>
                 <div
@@ -94,8 +103,20 @@ export const S4_Create: React.FC = () => {
               }}
             >
               {OCCASIONS.map((o, i) => (
-                <Chip key={o} active={i === selected}>
-                  {o}
+                <Chip key={o.label} active={i === selected}>
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <Art
+                      name={o.art}
+                      style={{ width: 26, height: 26, objectFit: "contain" }}
+                    />
+                    {o.label}
+                  </span>
                 </Chip>
               ))}
             </div>

@@ -1,15 +1,16 @@
 import { useCurrentFrame, useVideoConfig } from "remotion";
 import { Scene } from "../components/Scene";
+import { Art } from "../components/Img";
 import { Glass } from "../components/ui";
 import { COLORS, FONT } from "../theme";
 import { pop, riseIn } from "../components/anim";
 
 const ROWS = [
-  { icon: "✨", t: "Magic embedded wallet", d: "A wallet is created from a plain Google login. No seed phrase, ever." },
-  { icon: "🌐", t: "Particle Universal Accounts", d: "EIP-7702 upgrades the wallet on first claim. Fund from any chain, any asset." },
-  { icon: "🔐", t: "ZeroDev programmable rules", d: "Refund-if-unclaimed and time-locks are enforced on-chain, not by a backend." },
-  { icon: "⚖️", t: "GiftEscrow on Arbitrum", d: "The value and rules live in the contract. Live and verified on-chain." },
-  { icon: "🛡️", t: "Non-custodial by design", d: "No private keys, no funds ever sit on our servers. Only gift metadata." },
+  { art: "prot-email", t: "Magic embedded wallet", d: "A wallet is created from a plain Google login. No seed phrase, ever." },
+  { art: "mascot", t: "Particle Universal Accounts", d: "EIP-7702 upgrades the wallet on first claim. Fund from any chain, any asset." },
+  { art: "prot-pin", t: "ZeroDev programmable rules", d: "Refund-if-unclaimed and time-locks are enforced on-chain, not by a backend." },
+  { art: "prot-open", t: "GiftEscrow on Arbitrum", d: "The value and rules live in the contract. Live and verified on-chain." },
+  { art: "trust", t: "Non-custodial by design", d: "No private keys, no funds ever sit on our servers. Only gift metadata." },
 ];
 
 export const S8_Tech: React.FC = () => {
@@ -50,18 +51,22 @@ export const S8_Tech: React.FC = () => {
               >
                 <div
                   style={{
-                    width: 66,
-                    height: 66,
+                    width: 72,
+                    height: 72,
                     borderRadius: 20,
-                    background: `linear-gradient(135deg, ${COLORS.coralSoft}, ${COLORS.amber})`,
+                    background: "rgba(255,255,255,0.7)",
+                    boxShadow: "inset 0 0 0 1px rgba(28,20,16,0.05)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: 34,
                     flexShrink: 0,
+                    overflow: "hidden",
                   }}
                 >
-                  {r.icon}
+                  <Art
+                    name={r.art}
+                    style={{ width: 58, height: 58, objectFit: "contain" }}
+                  />
                 </div>
                 <div>
                   <div

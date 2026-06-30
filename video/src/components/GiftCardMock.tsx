@@ -1,10 +1,11 @@
 import { COLORS, FONT } from "../theme";
+import { Art } from "./Img";
 
 // The gift card surface as the recipient sees it. Optional custom art fills the
-// top; otherwise a warm gradient with the occasion glyph.
+// top; otherwise a warm gradient with an app illustration.
 export const GiftCardMock: React.FC<{
   occasion?: string;
-  emoji?: string;
+  iconArt?: string; // app art name shown on the gradient hero
   amount?: string;
   recipient?: string;
   message?: string;
@@ -12,7 +13,7 @@ export const GiftCardMock: React.FC<{
   width?: number;
 }> = ({
   occasion = "A little something",
-  emoji = "🎁",
+  iconArt = "occ-holiday",
   amount = "$25.00",
   recipient = "for Maya",
   message = "Coffee's on me this week. Love you!",
@@ -44,7 +45,14 @@ export const GiftCardMock: React.FC<{
         }}
       >
         {!art ? (
-          <span style={{ fontSize: 120 }}>{emoji}</span>
+          <Art
+            name={iconArt}
+            style={{
+              width: width * 0.5,
+              height: "auto",
+              filter: "drop-shadow(0 12px 20px rgba(0,0,0,0.25))",
+            }}
+          />
         ) : null}
         <div
           style={{
