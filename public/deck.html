@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Selip Pitch Deck</title>
+    <link rel="icon" href="/icon-192.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #1c1410;
+        --coral: #f9603d;
+        --amber: #f59e0b;
+        --green: #2bb673;
+        --page: #fdf7f3;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        height: 100%;
+        font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+        color: var(--ink);
+        background: #efe6df;
+      }
+      .stage {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .slide {
+        position: absolute;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        padding: 8vh 9vw;
+        background:
+          radial-gradient(40% 35% at 12% 8%, rgba(255, 154, 118, 0.5), transparent 70%),
+          radial-gradient(45% 40% at 90% 6%, rgba(255, 200, 120, 0.45), transparent 70%),
+          radial-gradient(50% 45% at 84% 92%, rgba(255, 145, 170, 0.38), transparent 70%),
+          radial-gradient(45% 45% at 8% 92%, rgba(196, 165, 255, 0.3), transparent 72%),
+          linear-gradient(160deg, #fff6f1 0%, #fdeee9 100%);
+      }
+      .slide.active { display: flex; animation: fade 0.45s ease; }
+      @keyframes fade {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: none; }
+      }
+      .kicker {
+        font-size: clamp(13px, 1.5vw, 20px);
+        font-weight: 800;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--coral);
+        margin-bottom: 2.4vh;
+      }
+      h1 {
+        font-size: clamp(34px, 6.2vw, 86px);
+        font-weight: 800;
+        line-height: 1.03;
+        letter-spacing: -2px;
+      }
+      h2 {
+        font-size: clamp(28px, 4.4vw, 60px);
+        font-weight: 800;
+        line-height: 1.06;
+        letter-spacing: -1.5px;
+        margin-bottom: 3vh;
+      }
+      p { font-size: clamp(16px, 1.9vw, 27px); font-weight: 500; line-height: 1.5; color: #4b4039; }
+      .grad {
+        background: linear-gradient(90deg, var(--coral), var(--amber));
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      .sub { margin-top: 3vh; max-width: 60ch; }
+      .row { display: flex; gap: 2.2vw; flex-wrap: wrap; margin-top: 4vh; }
+      .card {
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: 22px;
+        padding: 3vh 2vw;
+        box-shadow: 0 18px 40px -20px rgba(214, 110, 70, 0.4);
+        flex: 1 1 0;
+        min-width: 220px;
+      }
+      .card h3 { font-size: clamp(18px, 2vw, 28px); font-weight: 800; margin-bottom: 1vh; }
+      .card p { font-size: clamp(14px, 1.5vw, 21px); }
+      .ico { width: clamp(48px, 5vw, 78px); height: auto; margin-bottom: 1.4vh; }
+      .pill {
+        display: inline-flex; align-items: center; gap: 10px;
+        padding: 10px 20px; border-radius: 999px; font-weight: 800;
+        font-size: clamp(13px, 1.4vw, 19px);
+        background: rgba(249, 96, 61, 0.12); color: var(--coral);
+      }
+      .big-num { font-size: clamp(40px, 7vw, 96px); font-weight: 800; color: var(--coral); letter-spacing: -2px; }
+      .flow { display: flex; align-items: center; gap: 1.6vw; flex-wrap: wrap; margin-top: 5vh; }
+      .step {
+        background: #fff; border-radius: 20px; padding: 2.4vh 1.6vw; text-align: center;
+        box-shadow: 0 14px 30px -18px rgba(28, 20, 16, 0.35); flex: 1 1 0; min-width: 160px;
+      }
+      .step img { width: clamp(54px, 6vw, 96px); height: auto; }
+      .step b { display: block; margin-top: 1vh; font-size: clamp(16px, 1.8vw, 24px); }
+      .step span { font-size: clamp(13px, 1.4vw, 18px); color: #6b5f56; }
+      .arrow { font-size: clamp(20px, 2.4vw, 36px); color: var(--coral); font-weight: 800; }
+      a { color: var(--coral); font-weight: 700; text-decoration: none; word-break: break-all; }
+      .center { align-items: center; justify-content: center; text-align: center; }
+      .center .sub { margin-left: auto; margin-right: auto; }
+      .mascot { width: clamp(120px, 16vw, 240px); height: auto; margin-bottom: 3vh; filter: drop-shadow(0 30px 40px rgba(214,110,70,0.3)); }
+      .foot {
+        position: absolute; left: 9vw; bottom: 4.5vh;
+        font-size: clamp(12px, 1.2vw, 16px); color: #9a8b80; font-weight: 600;
+      }
+      .stack { display: flex; flex-direction: column; gap: 1.6vh; margin-top: 3vh; }
+      .stack .line { font-size: clamp(15px, 1.7vw, 24px); }
+      .stack b { color: var(--ink); }
+      .check { color: var(--green); font-weight: 800; }
+      .logo { display: flex; align-items: center; gap: 16px; }
+      .logo img { width: clamp(56px, 6vw, 104px); height: auto; border-radius: 22%; }
+      .logo span { font-size: clamp(34px, 5vw, 78px); font-weight: 800; letter-spacing: -2px; }
+      /* nav */
+      .nav {
+        position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+        display: flex; gap: 10px; z-index: 10;
+      }
+      .dot { width: 11px; height: 11px; border-radius: 999px; background: rgba(28,20,16,0.18); border: none; cursor: pointer; padding: 0; }
+      .dot.on { background: var(--coral); width: 26px; }
+      .hint { position: fixed; bottom: 20px; right: 22px; font-size: 13px; color: #9a8b80; z-index: 10; }
+      @media print {
+        html, body { background: #fff; }
+        .stage { position: static; }
+        .slide { display: flex !important; position: relative; inset: auto; page-break-after: always; height: 100vh; animation: none; }
+        .nav, .hint { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage" id="stage">
+      <!-- 1 COVER -->
+      <section class="slide center">
+        <img class="mascot" src="/art/mascot.webp" alt="" />
+        <div class="logo"><img src="/icon-512.png" alt="" /><span>Selip</span></div>
+        <h2 class="grad" style="margin-top:3vh">Slip someone a gift.</h2>
+        <p class="sub">Cross-chain money gifts for people who have never touched crypto. No wallet, no seed phrase, no gas.</p>
+        <p style="margin-top:3vh"><a href="https://selip.vercel.app">selip.vercel.app</a> &nbsp;·&nbsp; UXmaxx Hackathon · General Track</p>
+      </section>
+
+      <!-- 2 PROBLEM -->
+      <section class="slide">
+        <div class="kicker">The problem</div>
+        <h1>Paying someone on-chain still <span class="grad">scares the people you want to pay.</span></h1>
+        <p class="sub">To receive crypto today, a normal person must make a wallet, save a seed phrase, learn about gas, and pick the right chain. Most give up. The gift never lands.</p>
+        <div class="row">
+          <div class="card"><h3>Seed phrases</h3><p>One screenshot from losing everything.</p></div>
+          <div class="card"><h3>Gas &amp; chains</h3><p>Confusing, easy to send to the wrong place.</p></div>
+          <div class="card"><h3>Friction</h3><p>An app to install before they get a cent.</p></div>
+        </div>
+      </section>
+
+      <!-- 3 SOLUTION -->
+      <section class="slide">
+        <div class="kicker">The solution</div>
+        <h1>Give a gift, <span class="grad">as easy as a text.</span></h1>
+        <p class="sub">The sender builds a gift in two minutes and shares one link. The recipient signs in with Google and the gift is already theirs, claimed in one tap. The words wallet, chain and gas never appear.</p>
+        <div class="row">
+          <div class="pill">✨ No wallet</div>
+          <div class="pill">🔗 No app to install</div>
+          <div class="pill">🔒 Non-custodial</div>
+        </div>
+      </section>
+
+      <!-- 4 DEMO / FLOW -->
+      <section class="slide">
+        <div class="kicker">How it feels</div>
+        <h2>Three taps, end to end.</h2>
+        <div class="flow">
+          <div class="step"><img src="/art/how-create.webp" alt="" /><b>Create</b><span>Pick amount, card &amp; rule</span></div>
+          <div class="arrow">→</div>
+          <div class="step"><img src="/art/how-share.webp" alt="" /><b>Share</b><span>One link or QR code</span></div>
+          <div class="arrow">→</div>
+          <div class="step"><img src="/art/how-open.webp" alt="" /><b>Open</b><span>Google sign-in, claimed</span></div>
+        </div>
+        <p class="sub">Full 2-minute walkthrough video in the submission. Live app: <a href="https://selip.vercel.app">selip.vercel.app</a></p>
+      </section>
+
+      <!-- 5 HOW IT WORKS -->
+      <section class="slide">
+        <div class="kicker">Under the hood</div>
+        <h2>Invisible by design.</h2>
+        <div class="row">
+          <div class="card"><img class="ico" src="/art/prot-email.webp" alt="" /><h3>Magic</h3><p>Embedded wallet from a Google login. No seed phrase, ever.</p></div>
+          <div class="card"><img class="ico" src="/art/prot-open.webp" alt="" /><h3>Particle UA</h3><p>EIP-7702 upgrades the wallet on first claim. Fund from any chain.</p></div>
+          <div class="card"><img class="ico" src="/art/prot-pin.webp" alt="" /><h3>ZeroDev</h3><p>Refund &amp; time-lock rules enforced on-chain, not a backend.</p></div>
+          <div class="card"><img class="ico" src="/art/trust.webp" alt="" /><h3>Arbitrum</h3><p>GiftEscrow holds value &amp; rules. Non-custodial settlement.</p></div>
+        </div>
+      </section>
+
+      <!-- 6 WHY DIFFERENT -->
+      <section class="slide">
+        <div class="kicker">Why it is different</div>
+        <h2>The rules live in the contract,<br />not a database.</h2>
+        <div class="stack">
+          <div class="line"><span class="check">✓</span> <b>Value &amp; rules on-chain.</b> The gift amount and its refund / lock rule sit in the smart account, not our server.</div>
+          <div class="line"><span class="check">✓</span> <b>Enforced by code.</b> Refund-if-unclaimed is a ZeroDev permission, impossible for us to override.</div>
+          <div class="line"><span class="check">✓</span> <b>Non-custodial.</b> No private keys, no funds ever touch the backend. The database only holds gift metadata.</div>
+          <div class="line"><span class="check">✓</span> <b>Walletless onboarding.</b> The recipient's account is created and upgraded on the fly, the first time they claim.</div>
+        </div>
+      </section>
+
+      <!-- 7 LIVE PROOF -->
+      <section class="slide center">
+        <div class="kicker">Live, on-chain, clickable</div>
+        <h2>Deployed &amp; verified on Arbitrum.</h2>
+        <p class="sub">GiftEscrow contract is live on Arbitrum Sepolia and source-verified. Every claim is real on-chain settlement.</p>
+        <p style="margin-top:3vh">Contract<br /><a href="https://sepolia.arbiscan.io/address/0x2548dc9aAEf1be2530966D8FCD26261C11a684bd">0x2548dc9aAEf1be2530966D8FCD26261C11a684bd</a></p>
+      </section>
+
+      <!-- 8 TECH STACK -->
+      <section class="slide">
+        <div class="kicker">Built with</div>
+        <h2>Tech stack.</h2>
+        <div class="row">
+          <div class="card"><h3>Frontend</h3><p>Next.js (App Router), TypeScript, Tailwind. PWA. Hosted on Vercel.</p></div>
+          <div class="card"><h3>Accounts</h3><p>Magic embedded wallet · Particle Universal Accounts (EIP-7702) · ZeroDev session keys.</p></div>
+          <div class="card"><h3>On-chain</h3><p>GiftEscrow (Solidity / Foundry) on Arbitrum. Supabase for metadata only.</p></div>
+        </div>
+      </section>
+
+      <!-- 9 STATUS -->
+      <section class="slide">
+        <div class="kicker">Where it stands</div>
+        <h2>Status.</h2>
+        <div class="row">
+          <div class="card center"><div class="big-num">3</div><p>core flows live: create, share, claim</p></div>
+          <div class="card center"><div class="big-num">✓</div><p>contract deployed &amp; verified on Arbitrum</p></div>
+          <div class="card center"><div class="big-num">0</div><p>seed phrases shown to the recipient</p></div>
+        </div>
+        <p class="sub">Built solo over the hackathon. Live now at <a href="https://selip.vercel.app">selip.vercel.app</a>.</p>
+      </section>
+
+      <!-- 10 CLOSING -->
+      <section class="slide center">
+        <img class="mascot" src="/art/success.webp" alt="" />
+        <div class="logo"><img src="/icon-512.png" alt="" /><span>Selip</span></div>
+        <h2 class="grad" style="margin-top:3vh">Slip someone a gift.</h2>
+        <p class="sub">No wallet needed, on either side.</p>
+        <p style="margin-top:2.5vh"><a href="https://selip.vercel.app">selip.vercel.app</a></p>
+      </section>
+    </div>
+
+    <div class="nav" id="nav"></div>
+    <div class="hint">← → to navigate · P to print</div>
+
+    <script>
+      const slides = Array.from(document.querySelectorAll(".slide"));
+      const nav = document.getElementById("nav");
+      let i = 0;
+      slides.forEach((_, k) => {
+        const b = document.createElement("button");
+        b.className = "dot";
+        b.onclick = () => go(k);
+        nav.appendChild(b);
+      });
+      const dots = Array.from(nav.children);
+      function go(n) {
+        i = Math.max(0, Math.min(slides.length - 1, n));
+        slides.forEach((s, k) => s.classList.toggle("active", k === i));
+        dots.forEach((d, k) => d.classList.toggle("on", k === i));
+      }
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") go(i + 1);
+        else if (e.key === "ArrowLeft" || e.key === "PageUp") go(i - 1);
+        else if (e.key === "Home") go(0);
+        else if (e.key === "End") go(slides.length - 1);
+        else if (e.key === "p" || e.key === "P") window.print();
+      });
+      document.addEventListener("click", (e) => {
+        if (e.target.closest("a") || e.target.closest(".dot")) return;
+        const x = e.clientX / window.innerWidth;
+        go(x < 0.3 ? i - 1 : i + 1);
+      });
+      go(0);
+    </script>
+  </body>
+</html>
