@@ -2,6 +2,7 @@ import { useCurrentFrame, useVideoConfig, interpolate } from "remotion";
 import { Scene } from "../components/Scene";
 import { PhoneFrame } from "../components/PhoneFrame";
 import { Caption } from "../components/Caption";
+import { Art } from "../components/Img";
 import { Glass } from "../components/ui";
 import { COLORS, FONT } from "../theme";
 
@@ -11,8 +12,12 @@ export const S5_Card: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Heart drawn with a stroke reveal.
-  const draw = interpolate(frame, [40, 170], [0, 1], {
+  // Heart drawn with a stroke reveal, then a real photo card crossfades in.
+  const draw = interpolate(frame, [40, 165], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const photo = interpolate(frame, [195, 245], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
@@ -53,13 +58,19 @@ export const S5_Card: React.FC = () => {
                 borderRadius: 24,
                 background: COLORS.white,
                 boxShadow: "inset 0 0 0 1px rgba(28,20,16,0.1)",
+                position: "relative",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 overflow: "hidden",
               }}
             >
-              <svg width="300" height="300" viewBox="0 0 100 100">
+              <svg
+                width="300"
+                height="300"
+                viewBox="0 0 100 100"
+                style={{ opacity: 1 - photo }}
+              >
                 <path
                   d="M50 78 C 18 54, 16 26, 38 26 C 48 26, 50 36, 50 40 C 50 36, 52 26, 62 26 C 84 26, 82 54, 50 78 Z"
                   fill="none"
@@ -72,6 +83,18 @@ export const S5_Card: React.FC = () => {
                   strokeDashoffset={LEN * (1 - draw)}
                 />
               </svg>
+              <Art
+                name="card-birthday"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  opacity: photo,
+                  transform: `scale(${interpolate(photo, [0, 1], [1.08, 1])})`,
+                }}
+              />
             </div>
 
             <div

@@ -4,6 +4,7 @@ import { PhoneFrame } from "../components/PhoneFrame";
 import { Caption } from "../components/Caption";
 import { GiftCardMock } from "../components/GiftCardMock";
 import { Confetti } from "../components/Confetti";
+import { Art } from "../components/Img";
 import { COLORS, FONT } from "../theme";
 import { pop } from "../components/anim";
 
@@ -33,10 +34,37 @@ export const S7_Claim: React.FC = () => {
     }),
   );
 
+  // Light burst behind the card right as it flips open.
+  const burst = interpolate(frame, [165, 210, 320, 380], [0, 1, 1, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const burstScale = interpolate(frame, [165, 320], [0.7, 1.25]);
+
   return (
     <Scene>
       <AbsoluteFill style={{ pointerEvents: "none" }}>
         <Confetti start={250} />
+      </AbsoluteFill>
+      <AbsoluteFill
+        style={{
+          alignItems: "center",
+          justifyContent: "center",
+          pointerEvents: "none",
+        }}
+      >
+        <Art
+          name="reveal"
+          style={{
+            position: "absolute",
+            left: "70%",
+            top: "44%",
+            width: 760,
+            transform: `translate(-50%, -50%) scale(${burstScale})`,
+            opacity: burst * 0.85,
+            filter: "blur(1px)",
+          }}
+        />
       </AbsoluteFill>
 
       <div style={{ display: "flex", alignItems: "center", gap: 110 }}>

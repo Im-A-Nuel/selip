@@ -1,4 +1,11 @@
-import { Composition, Series, AbsoluteFill, Audio, staticFile } from "remotion";
+import { Composition, AbsoluteFill, Audio, staticFile, Easing } from "remotion";
+import {
+  TransitionSeries,
+  linearTiming,
+  springTiming,
+} from "@remotion/transitions";
+import { fade } from "@remotion/transitions/fade";
+import { slide } from "@remotion/transitions/slide";
 import { AuroraBackground } from "./components/AuroraBackground";
 import { FPS } from "./theme";
 import { S1_Intro } from "./scenes/S1_Intro";
@@ -14,32 +21,68 @@ import { S9_Outro } from "./scenes/S9_Outro";
 // Drop a track at video/public/music.mp3 and set this to "music.mp3" to add audio.
 const MUSIC_SRC: string | null = null;
 
-const SCENES: { c: React.FC; d: number }[] = [
-  { c: S1_Intro, d: 160 },
-  { c: S2_Problem, d: 300 },
-  { c: S3_Meet, d: 240 },
-  { c: S4_Create, d: 600 },
-  { c: S5_Card, d: 320 },
-  { c: S6_Share, d: 360 },
-  { c: S7_Claim, d: 720 },
-  { c: S8_Tech, d: 480 },
-  { c: S9_Outro, d: 420 },
+const TRANS = 22; // transition overlap (frames)
+
+// Each scene's standalone length. Transitions overlap neighbours, so the final
+// duration is sum - (#transitions * TRANS). Lengths are padded so the result
+// lands on ~120s.
+const SCENES: React.FC[] = [
+  S1_Intro,
+  S2_Problem,
+  S3_Meet,
+  S4_Create,
+  S5_Card,
+  S6_Share,
+  S7_Claim,
+  S8_Tech,
+  S9_Outro,
+];
+const DUR = [176, 316, 256, 616, 336, 376, 736, 496, 436];
+
+// Transition between scene i and i+1 (8 of them). Slides drive the step flow
+// forward; fades bracket the conceptual scenes.
+const ease = linearTiming({
+  durationInFrames: TRANS,
+  easing: Easing.inOut(Easing.cubic),
+});
+const spring = springTiming({ config: { damping: 200 }, durationInFrames: TRANS });
+
+const TRANSITIONS = [
+  { p: fade(), t: ease }, // 1->2
+  { p: slide({ direction: "from-bottom" }), t: spring }, // 2->3
+  { p: slide({ direction: "from-right" }), t: spring }, // 3->4
+  { p: slide({ direction: "from-right" }), t: spring }, // 4->5
+  { p: slide({ direction: "from-right" }), t: spring }, // 5->6
+  { p: slide({ direction: "from-right" }), t: spring }, // 6->7
+  { p: fade(), t: ease }, // 7->8
+  { p: fade(), t: ease }, // 8->9
 ];
 
-const TOTAL = SCENES.reduce((a, s) => a + s.d, 0); // 3600 = 120s @ 30fps
+const TOTAL = DUR.reduce((a, b) => a + b, 0) - TRANSITIONS.length * TRANS;
 
 const SelipDemo: React.FC = () => {
   return (
     <AbsoluteFill>
       <AuroraBackground />
       {MUSIC_SRC ? <Audio src={staticFile(MUSIC_SRC)} volume={0.6} /> : null}
-      <Series>
-        {SCENES.map((s, i) => (
-          <Series.Sequence key={i} durationInFrames={s.d}>
-            <s.c />
-          </Series.Sequence>
-        ))}
-      </Series>
+      <TransitionSeries>
+        {SCENES.flatMap((C, i) => {
+          const seq = (
+            <TransitionSeries.Sequence key={`s${i}`} durationInFrames={DUR[i]}>
+              <C />
+            </TransitionSeries.Sequence>
+          );
+          if (i >= TRANSITIONS.length) return [seq];
+          return [
+            seq,
+            <TransitionSeries.Transition
+              key={`t${i}`}
+              presentation={TRANSITIONS[i].p}
+              timing={TRANSITIONS[i].t}
+            />,
+          ];
+        })}
+      </TransitionSeries>
     </AbsoluteFill>
   );
 };

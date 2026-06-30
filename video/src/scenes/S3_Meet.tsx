@@ -1,5 +1,6 @@
 import { useCurrentFrame, useVideoConfig, interpolate } from "remotion";
 import { Scene } from "../components/Scene";
+import { Art } from "../components/Img";
 import { COLORS, FONT } from "../theme";
 import { pop, riseIn } from "../components/anim";
 import { Badge } from "../components/ui";
@@ -7,9 +8,11 @@ import { Badge } from "../components/ui";
 export const S3_Meet: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const sBadge = pop(frame, fps, 4);
-  const sTitle = pop(frame, fps, 16);
-  const sSub = pop(frame, fps, 30);
+  const sHero = pop(frame, fps, 0);
+  const sBadge = pop(frame, fps, 10);
+  const sTitle = pop(frame, fps, 20);
+  const sSub = pop(frame, fps, 34);
+  const bob = Math.sin(frame / 26) * 8;
 
   const words = ["wallet.", "app.", "crypto words."];
 
@@ -20,9 +23,19 @@ export const S3_Meet: React.FC = () => {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: 36,
+          gap: 24,
         }}
       >
+        <Art
+          name="hero"
+          style={{
+            width: 720,
+            height: "auto",
+            opacity: sHero,
+            mixBlendMode: "multiply",
+            transform: `translateY(${bob}px) scale(${interpolate(sHero, [0, 1], [0.9, 1])})`,
+          }}
+        />
         <div style={{ ...riseIn(sBadge, 16) }}>
           <Badge>✨ Meet Selip</Badge>
         </div>
@@ -30,9 +43,9 @@ export const S3_Meet: React.FC = () => {
           style={{
             ...riseIn(sTitle),
             fontFamily: FONT,
-            fontSize: 96,
+            fontSize: 78,
             fontWeight: 800,
-            letterSpacing: -3,
+            letterSpacing: -2,
             textAlign: "center",
             color: COLORS.ink,
             lineHeight: 1,
