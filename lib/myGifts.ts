@@ -57,3 +57,41 @@ export function getGiftIds(): string[] {
     return [];
   }
 }
+
+// ZeroDev refund-automation permission, one per gift. Kept only in the
+// sender's own browser -- never sent to the backend. The session key here can
+// only ever call refund() on this one gift's escrow (see lib/zerodev.ts), so
+// storing it client-side carries no custody risk.
+export interface StoredRefundPermission {
+  escrowAddress: string;
+  sessionPrivateKey: string;
+  serializedAccount: string;
+}
+
+function refundKey(giftId: string): string {
+  return `selip.refundPermission.${giftId}`;
+}
+
+export function storeRefundPermission(
+  giftId: string,
+  permission: StoredRefundPermission,
+): void {
+  if (typeof window === "undefined" || !giftId) return;
+  try {
+    localStorage.setItem(refundKey(giftId), JSON.stringify(permission));
+  } catch {
+    // ignore quota / privacy-mode errors
+  }
+}
+
+export function getRefundPermission(
+  giftId: string,
+): StoredRefundPermission | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(refundKey(giftId));
+    return raw ? (JSON.parse(raw) as StoredRefundPermission) : null;
+  } catch {
+    return null;
+  }
+}

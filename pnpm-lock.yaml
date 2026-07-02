@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  viem@2.52.2: a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af
+
 importers:
 
   .:
@@ -22,10 +25,10 @@ importers:
         version: 2.108.1
       '@zerodev/permissions':
         specifier: ^5.6.3
-        version: 5.6.3(@zerodev/sdk@5.5.10(viem@2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)))(@zerodev/webauthn-key@5.5.0(viem@2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)))(viem@2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6))
+        version: 5.6.3(@zerodev/sdk@5.5.10(viem@2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)))(@zerodev/webauthn-key@5.5.0(viem@2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)))(viem@2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6))
       '@zerodev/sdk':
         specifier: ^5.5.10
-        version: 5.5.10(viem@2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6))
+        version: 5.5.10(viem@2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6))
       magic-sdk:
         specifier: ^33.7.1
         version: 33.7.1
@@ -43,7 +46,7 @@ importers:
         version: 19.1.0(react@19.1.0)
       viem:
         specifier: ^2.52.2
-        version: 2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)
+        version: 2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)
     devDependencies:
       '@types/node':
         specifier: 22.10.0
@@ -1675,7 +1678,7 @@ snapshots:
       merkletreejs: 0.5.2
       ts-enum-util: 4.1.0
       uuid: 11.1.1
-      viem: 2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)
+      viem: 2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -1931,25 +1934,25 @@ snapshots:
     dependencies:
       '@types/node': 22.10.0
 
-  '@zerodev/permissions@5.6.3(@zerodev/sdk@5.5.10(viem@2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)))(@zerodev/webauthn-key@5.5.0(viem@2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)))(viem@2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6))':
+  '@zerodev/permissions@5.6.3(@zerodev/sdk@5.5.10(viem@2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)))(@zerodev/webauthn-key@5.5.0(viem@2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)))(viem@2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6))':
     dependencies:
       '@simplewebauthn/browser': 9.0.1
-      '@zerodev/sdk': 5.5.10(viem@2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6))
-      '@zerodev/webauthn-key': 5.5.0(viem@2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6))
+      '@zerodev/sdk': 5.5.10(viem@2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6))
+      '@zerodev/webauthn-key': 5.5.0(viem@2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6))
       merkletreejs: 0.3.11
-      viem: 2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)
+      viem: 2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)
 
-  '@zerodev/sdk@5.5.10(viem@2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6))':
+  '@zerodev/sdk@5.5.10(viem@2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6))':
     dependencies:
       semver: 7.8.4
-      viem: 2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)
+      viem: 2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)
 
-  '@zerodev/webauthn-key@5.5.0(viem@2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6))':
+  '@zerodev/webauthn-key@5.5.0(viem@2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6))':
     dependencies:
       '@noble/curves': 1.9.7
       '@simplewebauthn/browser': 8.3.7
       '@simplewebauthn/types': 12.0.0
-      viem: 2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)
+      viem: 2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6)
 
   abitype@1.2.3(typescript@5.7.3):
     optionalDependencies:
@@ -2731,7 +2734,7 @@ snapshots:
 
   uuid@8.3.2: {}
 
-  viem@2.52.2(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6):
+  viem@2.52.2(patch_hash=a5b6b418d3ff15a0fc0069f89be720ea9db57fc96adf387896d84881e89743af)(bufferutil@4.1.0)(typescript@5.7.3)(utf-8-validate@6.0.6):
     dependencies:
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0

@@ -7,8 +7,13 @@ import { PillButton } from "@/components/ui";
 import { QrModal } from "@/components/QrModal";
 import { BackButton } from "@/components/BackButton";
 import { useToast } from "@/components/Toast";
-import { getSenderId, getGiftIds } from "@/lib/myGifts";
-import { occasionById } from "@/lib/constants";
+import { getSenderId, getGiftIds, getRefundPermission } from "@/lib/myGifts";
+import { occasionById, GIFT_ESCROW_FACTORY } from "@/lib/constants";
+import { executeAutomatedRefund } from "@/lib/zerodev";
+
+const SEPOLIA_RPC =
+  process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL ??
+  "https://sepolia-rollup.arbitrum.io/rpc";
 
 interface Item {
   id: string;
@@ -117,6 +122,29 @@ export default function MyGiftsPage() {
   async function requestRefund(id: string) {
     setRefunding(id);
     try {
+      // Real on-chain refund, no wallet popup: the ZeroDev session key
+      // installed at fund time is scoped to only ever call refund() on this
+      // one gift's escrow, so it can execute this without the sender
+      // reconnecting or signing again.
+      const permission = getRefundPermission(id);
+      if (permission) {
+        try {
+          await executeAutomatedRefund(
+            permission.serializedAccount,
+            permission.escrowAddress as `0x${string}`,
+            GIFT_ESCROW_FACTORY.chainId,
+            SEPOLIA_RPC,
+          );
+        } catch (chainError) {
+          toast(
+            (chainError as Error).message ??
+              "On-chain refund failed. It may not be past the deadline yet.",
+          );
+          setRefunding(null);
+          return;
+        }
+      }
+
       const res = await fetch(`/api/gifts/${id}/refund`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -124,7 +152,11 @@ export default function MyGiftsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        toast("Refund requested. Funds return to your wallet");
+        toast(
+          permission
+            ? "Refunded on-chain. Funds are back in your wallet"
+            : "Refund requested. Funds return to your wallet",
+        );
         await load();
       } else {
         toast(data?.error?.message ?? "Refund failed.");

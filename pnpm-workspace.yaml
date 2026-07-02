@@ -3,3 +3,5 @@ allowBuilds:
   bigint-buffer: true
   bufferutil: true
   utf-8-validate: true
+patchedDependencies:
+  viem@2.52.2: patches/viem@2.52.2.patch

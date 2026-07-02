@@ -98,6 +98,23 @@ export const ONCHAIN_PROOF = {
     "https://sepolia.arbiscan.io/address/0x2548dc9aAEf1be2530966D8FCD26261C11a684bd",
 } as const;
 
+// GiftEscrowFactory: one call deploys + funds a fresh GiftEscrow per gift, so
+// the sender's Universal Account only signs once. Testnet for now (Week 1-3);
+// swap to the Arbitrum mainnet deployment at the Week 4 mainnet cutover.
+export const GIFT_ESCROW_FACTORY = {
+  address: "0x3B559aB2B76b0475Bb9c0369e5725202d3D231F7",
+  chainId: 421614, // Arbitrum Sepolia
+  explorerBase: "https://sepolia.arbiscan.io",
+} as const;
+
+export function explorerAddressUrl(address: string): string {
+  return `${GIFT_ESCROW_FACTORY.explorerBase}/address/${address}`;
+}
+
+export function explorerTxUrl(txHash: string): string {
+  return `${GIFT_ESCROW_FACTORY.explorerBase}/tx/${txHash}`;
+}
+
 export function isOccasion(v: string): v is OccasionId {
   return OCCASIONS.some((o) => o.id === v);
 }

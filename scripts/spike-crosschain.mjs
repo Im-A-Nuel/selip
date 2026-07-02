@@ -45,7 +45,7 @@ console.log("Universal Account initialized for owner:", OWNER);
 // Read the unified, cross-chain balance. Method name may vary across SDK
 // versions; try the documented ones and report what is available.
 async function readBalance() {
-  for (const fn of ["getAssets", "getUnifiedBalance", "getBalances"]) {
+  for (const fn of ["getPrimaryAssets", "getAssets", "getUnifiedBalance", "getBalances"]) {
     if (typeof ua[fn] === "function") {
       const res = await ua[fn]();
       console.log(`balance via ${fn}():`, JSON.stringify(res, null, 2));

@@ -25,7 +25,29 @@ import {
   type RuleTypeId,
   type SourceAssetId,
 } from "@/lib/constants";
-import { getSenderId, rememberGiftId } from "@/lib/myGifts";
+import { getSenderId, rememberGiftId, storeRefundPermission } from "@/lib/myGifts";
+import { connectWallet, signRootHash as signRootHashWith } from "@/lib/wallet";
+import { fundGiftEscrow } from "@/lib/particle";
+import { fundGiftDirect } from "@/lib/directFund";
+import { createRefundPermission, isZeroDevConfigured } from "@/lib/zerodev";
+import { EXPIRY_DAYS } from "@/lib/gifts";
+import { explorerAddressUrl } from "@/lib/constants";
+
+const SEPOLIA_RPC =
+  process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL ??
+  "https://sepolia-rollup.arbitrum.io/rpc";
+
+// TEMP DEMO CONVERSION ONLY. draft.amount is a display dollar figure ("50" for
+// "$50"), not a crypto amount. There is no USD->ETH price oracle wired yet, so
+// this scales it down to a tiny, safe testnet amount. This MUST be replaced
+// with a real quote (e.g. Particle's convert/trade quote) before this ever
+// points at mainnet -- sending draft.amount directly as ETH would move real
+// money at ~1600x the intended value.
+const DEMO_USD_TO_ETH_RATE = 0.00001;
+function demoAmountToEth(usdAmount: string): string {
+  const n = Number(usdAmount) || 0;
+  return (n * DEMO_USD_TO_ETH_RATE).toFixed(8);
+}
 
 interface Draft {
   occasion: OccasionId;
@@ -72,11 +94,13 @@ export default function CreatePage() {
   const [editorOpen, setEditorOpen] = useState(false);
   const [dir, setDir] = useState<1 | -1>(1);
 
-  // Funding (demo) state
+  // Funding state
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
+  const [ownerAddress, setOwnerAddress] = useState<`0x${string}` | null>(null);
   const [source, setSource] = useState<SourceAssetId | null>(null);
   const [funding, setFunding] = useState(false);
+  const [escrowUrl, setEscrowUrl] = useState<string | null>(null);
 
   const amountFormatted = useMemo(
     () =>
@@ -138,20 +162,28 @@ export default function CreatePage() {
     }
   }
 
-  function connect() {
+  async function connect() {
     setConnecting(true);
-    // Demo: simulate connecting the sender's account. Real path uses the
-    // Universal Accounts / wallet SDK.
-    setTimeout(() => {
-      setConnecting(false);
+    setError(null);
+    try {
+      const addr = await connectWallet();
+      setOwnerAddress(addr);
       setConnected(true);
-      toast("Account connected");
-    }, 800);
+      toast("Wallet connected");
+    } catch (e) {
+      setError((e as Error).message ?? "Could not connect a wallet.");
+    } finally {
+      setConnecting(false);
+    }
   }
 
   async function fund() {
     if (!source) {
       setError("Pick an asset to fund from.");
+      return;
+    }
+    if (!ownerAddress) {
+      setError("Connect your wallet first.");
       return;
     }
     setFunding(true);
@@ -196,14 +228,50 @@ export default function CreatePage() {
       rememberGiftId(created.id);
 
       const asset = SOURCE_ASSETS.find((a) => a.id === source);
+      const deadlineUnix =
+        Math.floor(Date.now() / 1000) + EXPIRY_DAYS * 24 * 60 * 60;
+
+      toast("Confirm the transaction in your wallet…");
+      const amountEth = demoAmountToEth(draft.amount);
+      let transactionId: string;
+      let escrowAddress: string | null;
+      try {
+        // Preferred path: Universal Accounts routes from whatever chain/asset
+        // the sender holds. Currently unavailable (Particle has custom
+        // contract calls disabled for this project) -- falls back below.
+        const uaResult = await fundGiftEscrow({
+          ownerAddress,
+          amountEth,
+          deadlineUnix,
+          signRootHash: (hash) => signRootHashWith(ownerAddress, hash),
+        });
+        transactionId = uaResult.transactionId;
+        escrowAddress = uaResult.escrowAddress;
+      } catch (uaError) {
+        console.warn(
+          "Universal Accounts funding unavailable, falling back to a direct transaction:",
+          uaError,
+        );
+        toast("Confirm the transaction in your wallet (direct mode)…");
+        const direct = await fundGiftDirect(ownerAddress, amountEth, deadlineUnix);
+        transactionId = direct.txHash;
+        escrowAddress = direct.escrowAddress;
+      }
+
+      if (!escrowAddress) {
+        setError(
+          "Sent, but still confirming on-chain. Check My gifts in a minute.",
+        );
+        return;
+      }
+
       const fundRes = await fetch(`/api/gifts/${created.id}/fund`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           source_chain: asset?.chain ?? "Base",
-          // Demo placeholders; real values come from the on-chain funding tx.
-          smart_account_addr: "0xDEMO000000000000000000000000000000000000",
-          funding_tx: "0xDEMOFUNDINGTX",
+          smart_account_addr: escrowAddress,
+          funding_tx: transactionId,
         }),
       });
       const funded = await fundRes.json();
@@ -216,9 +284,30 @@ export default function CreatePage() {
         typeof window !== "undefined" ? window.location.origin : "";
       setClaimSlug(created.claim_slug);
       setClaimUrl(`${base}/g/${created.claim_slug}`);
+      setEscrowUrl(explorerAddressUrl(escrowAddress));
       toast("Gift funded 🎁");
-    } catch {
-      setError("Network hiccup. Please try again.");
+
+      // Install the refund-only session key permission (ZeroDev), scoped to
+      // this one escrow and only usable after its deadline. Best-effort: a
+      // gift is still valid without it, it just loses automated refund.
+      if (isZeroDevConfigured()) {
+        try {
+          const permission = await createRefundPermission(
+            escrowAddress as `0x${string}`,
+            deadlineUnix,
+            SEPOLIA_RPC,
+          );
+          storeRefundPermission(created.id, {
+            escrowAddress,
+            sessionPrivateKey: permission.sessionPrivateKey,
+            serializedAccount: permission.serializedAccount,
+          });
+        } catch (permError) {
+          console.warn("ZeroDev refund permission setup skipped:", permError);
+        }
+      }
+    } catch (e) {
+      setError((e as Error).message ?? "Network hiccup. Please try again.");
     } finally {
       setFunding(false);
     }
@@ -290,26 +379,48 @@ export default function CreatePage() {
           </div>
           <button
             onClick={() => setShowQr(true)}
-            className="text-sm font-semibold text-coral-600 hover:text-coral-700"
+            className="flex items-center justify-center gap-1.5 rounded-2xl bg-white/60 py-3 text-sm font-semibold text-coral-600 ring-1 ring-coral-100 transition-[transform,background-color] active:scale-[0.98] active:bg-white"
           >
-            Show QR code
+            <span aria-hidden>▦</span> Show QR code
           </button>
         </div>
 
         {showQr && (
           <QrModal value={claimUrl} onClose={() => setShowQr(false)} />
         )}
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm font-semibold">
+        <div className="grid w-full grid-cols-2 gap-2.5">
           {claimSlug && (
             <button
               onClick={() => window.open(`/g/${claimSlug}`, "_blank")}
-              className="text-coral-600"
+              className="flex items-center justify-center gap-1.5 rounded-2xl bg-coral-50 px-3 py-3.5 text-sm font-bold text-coral-600 transition-[transform,background-color] active:scale-[0.97] active:bg-coral-100"
             >
-              Preview as recipient →
+              Preview <span aria-hidden>→</span>
             </button>
           )}
-          <a href="/create" className="text-ink/60">Create another</a>
-          <Link href="/gifts" className="text-ink/60">My gifts</Link>
+          <Link
+            href="/gifts"
+            className="flex items-center justify-center gap-1.5 rounded-2xl bg-white/70 px-3 py-3.5 text-sm font-bold text-ink/70 ring-1 ring-ink/5 transition-[transform,background-color] active:scale-[0.97] active:bg-white"
+          >
+            My gifts
+          </Link>
+          <a
+            href="/create"
+            className="flex items-center justify-center gap-1.5 rounded-2xl bg-white/70 px-3 py-3.5 text-sm font-bold text-ink/70 ring-1 ring-ink/5 transition-[transform,background-color] active:scale-[0.97] active:bg-white"
+          >
+            Create another
+          </a>
+          {escrowUrl && (
+            <a
+              href={escrowUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center justify-center gap-1.5 rounded-2xl bg-white/70 px-3 py-3.5 text-sm font-bold text-ink/70 ring-1 ring-ink/5 transition-[transform,background-color] active:scale-[0.97] active:bg-white ${
+                claimSlug ? "" : "col-span-2"
+              }`}
+            >
+              On-chain proof <span aria-hidden>↗</span>
+            </a>
+          )}
         </div>
       </main>
     );
@@ -653,6 +764,10 @@ export default function CreatePage() {
                 <p className="text-sm leading-relaxed text-ink/60">
                   Fund from your crypto on any chain. We route and convert it for
                   you, so the recipient never sees the complexity.
+                </p>
+                <p className="text-xs font-medium text-ink/40">
+                  This is your wallet, for sending only. Whoever you send to
+                  never needs one.
                 </p>
                 <PillButton onClick={connect} loading={connecting}>
                   Connect account
