@@ -79,9 +79,11 @@ export const DEST_CHAINS = [
 // Source assets the sender can fund from. The Universal Accounts SDK routes and
 // converts any of these into the gift escrow on Arbitrum. Balances here are
 // placeholders for the demo flow; real balances come from the SDK once wired.
+// All stablecoin (USDC): the gift amount is a dollar figure, so a raw ETH
+// balance here would be a confusing unit mismatch next to it.
 export const SOURCE_ASSETS = [
   { id: "usdc-base", token: "USDC", chain: "Base", balance: 247.83 },
-  { id: "eth-arb", token: "ETH", chain: "Arbitrum", balance: 0.0412 },
+  { id: "usdc-arb", token: "USDC", chain: "Arbitrum", balance: 132.5 },
   { id: "usdc-op", token: "USDC", chain: "Optimism", balance: 89.14 },
   { id: "usdc-poly", token: "USDC", chain: "Polygon", balance: 156.92 },
 ] as const;
