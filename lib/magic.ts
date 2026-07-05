@@ -94,6 +94,14 @@ export async function getUserEmail(): Promise<string | null> {
   return info?.email ?? null;
 }
 
+// The embedded wallet's EIP-1193 provider. Used as the signer for the
+// recipient's gasless smart-account claim (lib/zerodev.ts claimGiftGasless);
+// Magic signs silently, so the recipient never sees a signing prompt.
+export async function getMagicProvider(): Promise<any> {
+  const magic = await getMagic();
+  return magic.rpcProvider;
+}
+
 export async function logout(): Promise<void> {
   const magic = await getMagic();
   await magic.user.logout();

@@ -57,6 +57,16 @@ const GIFT_ESCROW_REFUND_ABI = [
   },
 ] as const;
 
+const GIFT_ESCROW_CLAIM_ABI = [
+  {
+    type: "function",
+    name: "claim",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "recipient", type: "address" }],
+    outputs: [],
+  },
+] as const;
+
 export interface RefundPermission {
   sessionPrivateKey: `0x${string}`;
   sessionKeyAddress: `0x${string}`;
@@ -146,6 +156,82 @@ export async function createRefundPermission(
     sessionKeyAddress: sessionKeySigner.account.address,
     serializedAccount,
   };
+}
+
+// Claim the gift on-chain, gaslessly, as the recipient. The recipient's Magic
+// embedded wallet (a fresh EOA with zero balance) owns a counterfactual ZeroDev
+// kernel account; that account sends the claim() UserOperation and the ZeroDev
+// paymaster sponsors the gas. The recipient never sees gas, never funds
+// anything -- the money simply arrives in their account. `signer` is any
+// EIP-1193 provider (Magic's rpcProvider) or local account.
+export async function claimGiftGasless(
+  escrowAddress: `0x${string}`,
+  recipientAddress: `0x${string}`,
+  signer: any,
+  chainId: number,
+  rpcUrl: string,
+): Promise<string> {
+  const [
+    { createPublicClient, http, encodeFunctionData },
+    { createKernelAccount, createKernelAccountClient, createZeroDevPaymasterClient },
+    { getEntryPoint, KERNEL_V3_3 },
+    { toPermissionValidator },
+    { toECDSASigner },
+    { toSudoPolicy },
+  ] = await Promise.all([
+    import("viem"),
+    import("@zerodev/sdk"),
+    import("@zerodev/sdk/constants"),
+    import("@zerodev/permissions"),
+    import("@zerodev/permissions/signers"),
+    import("@zerodev/permissions/policies"),
+  ]);
+
+  const publicClient = createPublicClient({ transport: http(rpcUrl) });
+  const entryPoint = getEntryPoint("0.7");
+
+  // Full-authority validator owned by the recipient's signer. Sudo policy is
+  // correct here: this is the recipient's own account, not a delegated key.
+  const ecdsaSigner = await toECDSASigner({ signer });
+  const sudoValidator = await toPermissionValidator(publicClient, {
+    entryPoint,
+    kernelVersion: KERNEL_V3_3,
+    signer: ecdsaSigner,
+    policies: [toSudoPolicy({})],
+  });
+
+  const kernelAccount = await createKernelAccount(publicClient, {
+    entryPoint,
+    kernelVersion: KERNEL_V3_3,
+    plugins: { sudo: sudoValidator },
+  });
+
+  const bundlerUrl = zerodevBundlerUrl(chainId);
+  const paymasterClient = createZeroDevPaymasterClient({
+    transport: http(bundlerUrl),
+  });
+  const kernelClient = createKernelAccountClient({
+    account: kernelAccount,
+    bundlerTransport: http(bundlerUrl),
+    paymaster: paymasterClient,
+    client: publicClient,
+  });
+
+  const claimCallData = encodeFunctionData({
+    abi: GIFT_ESCROW_CLAIM_ABI,
+    functionName: "claim",
+    args: [recipientAddress],
+  });
+
+  const userOpHash = await kernelClient.sendUserOperation({
+    callData: await kernelAccount.encodeCalls([
+      { to: escrowAddress, value: 0n, data: claimCallData },
+    ]),
+  });
+  const receipt = await kernelClient.waitForUserOperationReceipt({
+    hash: userOpHash,
+  });
+  return receipt.receipt.transactionHash;
 }
 
 // Called later (after the deadline), using only the session key -- no wallet

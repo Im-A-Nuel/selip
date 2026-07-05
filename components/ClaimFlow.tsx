@@ -3,8 +3,11 @@
 // Recipient claim flow:
 //   closed -> (login) -> (gate: pin/email) -> opening -> revealed -> thanks
 //
-// Real on-chain claim (EOA->UA via 7702, cross-chain route) wired in week 3-4.
-// Protection gates are enforced by the claim API; demo mode exercises every gate.
+// The claim is real and two-phase: the API validates the gift's gate and
+// reveals the escrow address (prepare), then the recipient's Magic wallet --
+// wrapped in a gasless ZeroDev smart account -- executes claim() on-chain, and
+// only that real transaction hash is recorded. Recipient never sees gas or a
+// signing prompt. Demo mode (no keys) still exercises every gate.
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
@@ -13,14 +16,20 @@ import { Confetti } from "@/components/Confetti";
 import { Badge, PillButton } from "@/components/ui";
 import { BrandIcon } from "@/components/BrandIcon";
 import { useToast } from "@/components/Toast";
-import { DEST_CHAINS, LOGIN_METHODS } from "@/lib/constants";
+import { DEST_CHAINS, LOGIN_METHODS, GIFT_ESCROW_FACTORY, explorerTxUrl } from "@/lib/constants";
 import {
+  getMagicProvider,
   getUserAddress,
   getUserEmail,
   isMagicConfigured,
   loginWithEmail,
   loginWithOAuth,
 } from "@/lib/magic";
+import { claimGiftGasless, isZeroDevConfigured } from "@/lib/zerodev";
+
+const SEPOLIA_RPC =
+  process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL ??
+  "https://sepolia-rollup.arbitrum.io/rpc";
 
 type Phase = "closed" | "gate" | "opening" | "revealed";
 
@@ -66,6 +75,9 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
 
   // cash-out completion
   const [cashedOut, setCashedOut] = useState(false);
+
+  // real on-chain claim receipt (explorer link), when the on-chain leg ran
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
 
   // thank-you
   const [thanks, setThanks] = useState("");
@@ -203,26 +215,72 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
     if (!r.ok) setGateError(r.error ?? "Could not open the gift.");
   }
 
-  // Records the claim. Returns {ok,error}; the caller decides how to surface a
-  // failure (gate error, auto-fallback to the gate, or a top-level note).
+  // Claims the gift. Two-phase: prepare (server validates the gate, reveals the
+  // escrow address), on-chain claim (recipient's gasless smart account moves the
+  // money), then record (real tx hash). Returns {ok,error}; the caller decides
+  // how to surface a failure (gate error, auto-fallback, or a top-level note).
   async function doClaim(
     addrOverride?: string,
     emailOverride?: string,
   ): Promise<{ ok: boolean; error?: string }> {
     setBusy(true);
     try {
+      const gateBody = {
+        pin: view.protection === "pin" ? pin.trim() : undefined,
+        recipient_email:
+          view.protection === "email"
+            ? emailOverride || email.trim()
+            : undefined,
+      };
+
+      // Phase 1: validate the gate server-side; get the escrow address.
+      const prepRes = await fetch(`/api/gifts/${giftId}/claim`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...gateBody, prepare: true }),
+      });
+      const prep = await prepRes.json();
+      if (!prepRes.ok) {
+        return { ok: false, error: prep?.error?.message ?? "Could not open the gift." };
+      }
+
+      // Phase 2: real on-chain claim into the recipient's account, gasless.
+      // Runs when the gift has a real escrow and the recipient has a real
+      // login; legacy/demo gifts skip straight to recording.
+      const claimerAddr = addrOverride || recipientAddr;
+      let claimTx = "0xDEMOCLAIMTX";
+      if (prep.escrow_addr && claimerAddr && isMagicConfigured() && isZeroDevConfigured()) {
+        setPhase("opening"); // show the opening animation while the money moves
+        try {
+          const provider = await getMagicProvider();
+          claimTx = await claimGiftGasless(
+            prep.escrow_addr as `0x${string}`,
+            claimerAddr as `0x${string}`,
+            provider,
+            GIFT_ESCROW_FACTORY.chainId,
+            SEPOLIA_RPC,
+          );
+          setReceiptUrl(explorerTxUrl(claimTx));
+        } catch (chainError) {
+          console.warn("On-chain claim failed:", chainError);
+          setPhase("closed");
+          return {
+            ok: false,
+            error:
+              "Something hiccuped while moving your gift. Please try again in a moment.",
+          };
+        }
+      }
+
+      // Phase 3: record the claim with the real transaction hash.
       const res = await fetch(`/api/gifts/${giftId}/claim`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          recipient_addr: addrOverride || recipientAddr || "0xDEMORECIPIENT",
+          ...gateBody,
+          recipient_addr: claimerAddr || "0xDEMORECIPIENT",
           dest_chain: dest,
-          claim_tx: "0xDEMOCLAIMTX",
-          pin: view.protection === "pin" ? pin.trim() : undefined,
-          recipient_email:
-            view.protection === "email"
-              ? emailOverride || email.trim()
-              : undefined,
+          claim_tx: claimTx,
         }),
       });
       const data = await res.json();
@@ -368,7 +426,32 @@ export function ClaimFlow({ giftId, view }: { giftId: string; view: PublicView }
         </div>
         <h1 className="text-2xl font-extrabold text-ink">This gift is yours 💛</h1>
 
-        {cashedOut ? (
+        {receiptUrl ? (
+          // The on-chain claim already ran: the money is really in their
+          // account, no extra step needed. Offer the proof, in plain words.
+          <div className="glass w-full rounded-2xl p-5 text-center">
+            <p className="text-3xl" aria-hidden>🎉</p>
+            <p className="mt-1 text-base font-extrabold text-ink">
+              {view.amount_display} is in your account
+            </p>
+            <p className="mt-0.5 text-sm text-ink/60">
+              It arrived the moment you opened this. Nothing else to do.
+            </p>
+            {recipientAddr && (
+              <p className="mt-2 break-all rounded-xl bg-white/70 px-3 py-2 font-mono text-[11px] text-ink/60 ring-1 ring-ink/5">
+                {recipientAddr}
+              </p>
+            )}
+            <a
+              href={receiptUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block text-xs font-semibold text-coral-600"
+            >
+              See the receipt ↗
+            </a>
+          </div>
+        ) : cashedOut ? (
           <div className="glass w-full rounded-2xl p-5 text-center">
             <p className="text-3xl" aria-hidden>🎉</p>
             <p className="mt-1 text-base font-extrabold text-ink">

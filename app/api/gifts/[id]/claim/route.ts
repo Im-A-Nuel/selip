@@ -1,6 +1,14 @@
-// POST /api/gifts/:id/claim - record a claim after on-chain transfer succeeds.
-// Enforces the gift's protection gate (time lock, recipient email, secret PIN)
-// before the claim is recorded.
+// POST /api/gifts/:id/claim - two-phase claim.
+//
+// Phase 1 (body.prepare === true): run every gate check (status, expiry, time
+// lock, email/PIN protection) and, if they pass, reveal the gift's escrow
+// address WITHOUT recording anything. The client then executes the real
+// on-chain claim() against that escrow.
+//
+// Phase 2 (default): same gate checks, then record the claim with the real
+// transaction hash. Recording only ever happens after the on-chain transfer
+// succeeded, so the database can never say "claimed" while the escrow still
+// holds the funds.
 
 import type { NextRequest } from "next/server";
 import { getRepo } from "@/lib/db";
@@ -26,8 +34,9 @@ export async function POST(
     return ERRORS.INVALID_INPUT("Invalid JSON body.");
   }
 
+  const prepare = body?.prepare === true;
   const { recipient_addr, dest_chain, claim_tx } = body ?? {};
-  if (!recipient_addr || !dest_chain || !claim_tx) {
+  if (!prepare && (!recipient_addr || !dest_chain || !claim_tx)) {
     return ERRORS.INVALID_INPUT(
       "recipient_addr, dest_chain, claim_tx are required.",
     );
@@ -78,6 +87,16 @@ export async function POST(
         return ERRORS.FORBIDDEN("Wrong secret code.");
       }
       clearPinAttempts(id);
+    }
+
+    if (prepare) {
+      // Gate passed: hand the client what it needs for the on-chain leg.
+      // Legacy/demo rows carry a placeholder address; only reveal a real one,
+      // so the client knows to fall back to the record-only path.
+      const addr = gift.smart_account_addr ?? "";
+      const isRealEscrow =
+        /^0x[0-9a-fA-F]{40}$/.test(addr) && !addr.startsWith("0xDEMO");
+      return ok({ escrow_addr: isRealEscrow ? addr : null });
     }
 
     const updated = await repo.update(id, {
