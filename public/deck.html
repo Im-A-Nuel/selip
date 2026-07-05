@@ -216,7 +216,7 @@
         <div class="row">
           <div class="card"><img class="ico" src="/art/prot-email.webp" alt="" /><h3>Magic</h3><p>Embedded wallet from a Google login. No seed phrase, ever.</p></div>
           <div class="card"><img class="ico" src="/art/prot-open.webp" alt="" /><h3>Particle UA</h3><p>EIP-7702 upgrades the wallet on first claim. Fund from any chain.</p></div>
-          <div class="card"><img class="ico" src="/art/prot-pin.webp" alt="" /><h3>ZeroDev</h3><p>Refund &amp; time-lock rules enforced on-chain, not a backend.</p></div>
+          <div class="card"><img class="ico" src="/art/prot-pin.webp" alt="" /><h3>ZeroDev</h3><p>Session keys &amp; paymaster: gasless claims, and unclaimed gifts refund themselves. No second signature.</p></div>
           <div class="card"><img class="ico" src="/art/trust.webp" alt="" /><h3>Arbitrum</h3><p>GiftEscrow holds value &amp; rules. Non-custodial settlement.</p></div>
         </div>
       </section>
@@ -243,8 +243,9 @@
         <img src="/art/reveal.webp" alt="" style="width:clamp(120px,15vw,220px);height:auto;margin-bottom:3vh;filter:drop-shadow(0 24px 36px rgba(214,110,70,0.3))" />
         <div class="kicker">Live, on-chain, clickable</div>
         <h2>Deployed &amp; verified on Arbitrum.</h2>
-        <p class="sub">GiftEscrow contract is live on Arbitrum Sepolia and source-verified. Every claim is real on-chain settlement.</p>
-        <p style="margin-top:3vh">Contract<br /><a href="https://sepolia.arbiscan.io/address/0x2548dc9aAEf1be2530966D8FCD26261C11a684bd">0x2548dc9aAEf1be2530966D8FCD26261C11a684bd</a></p>
+        <p class="sub">Every gift is its own verified GiftEscrow, deployed and funded in one transaction by the factory. Claims and refunds settle on-chain, gasless for the recipient, sponsored by the paymaster.</p>
+        <p style="margin-top:3vh">Factory (verified, one escrow per gift)<br /><a href="https://sepolia.arbiscan.io/address/0x3B559aB2B76b0475Bb9c0369e5725202d3D231F7">0x3B559aB2B76b0475Bb9c0369e5725202d3D231F7</a></p>
+        <p style="margin-top:1.5vh">A real gasless claim, by a zero-balance recipient<br /><a href="https://sepolia.arbiscan.io/tx/0x71328d8796f4da7a9f4f0842f8f2bc4b5c05fee51891ee7ff72f410f5e140525">0x71328d…140525</a></p>
       </section>
 
       <!-- 8 TECH STACK -->
@@ -277,9 +278,9 @@
             <div class="kicker">Where it stands</div>
             <h2>Status.</h2>
             <div class="row">
-              <div class="card center"><div class="big-num">3</div><p>core flows live: create, share, claim</p></div>
-              <div class="card center"><div class="big-num">✓</div><p>contract deployed &amp; verified</p></div>
-              <div class="card center"><div class="big-num">0</div><p>seed phrases shown to recipient</p></div>
+              <div class="card center"><div class="big-num">3</div><p>core flows settle on-chain: create, share, claim</p></div>
+              <div class="card center"><div class="big-num">✓</div><p>contracts deployed &amp; verified</p></div>
+              <div class="card center"><div class="big-num">0</div><p>gas or seed phrases shown to recipient</p></div>
             </div>
             <p class="sub">Built solo over the hackathon. Live now at <a href="https://selip.vercel.app">selip.vercel.app</a>.</p>
           </div>
