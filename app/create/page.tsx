@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { GiftCard } from "@/components/GiftCard";
 import { Stepper } from "@/components/Stepper";
 import { Confetti } from "@/components/Confetti";
@@ -26,7 +27,7 @@ import {
   type SourceAssetId,
 } from "@/lib/constants";
 import { getSenderId, rememberGiftId, storeRefundPermission } from "@/lib/myGifts";
-import { connectWallet, signRootHash as signRootHashWith } from "@/lib/wallet";
+import { connectWallet, friendlyWalletError, signRootHash as signRootHashWith } from "@/lib/wallet";
 import { fundGiftEscrow } from "@/lib/particle";
 import { fundGiftDirect } from "@/lib/directFund";
 import { createRefundPermission, isZeroDevConfigured } from "@/lib/zerodev";
@@ -68,8 +69,25 @@ interface Draft {
 const STEPS = ["Occasion", "Amount", "Message", "Rule", "Protect", "Fund"];
 const QUICK_AMOUNTS = [10, 25, 50, 100];
 
+function toDatetimeLocal(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function CreatePage() {
+  return (
+    <Suspense fallback={null}>
+      <CreatePageInner />
+    </Suspense>
+  );
+}
+
+function CreatePageInner() {
   const toast = useToast();
+  const searchParams = useSearchParams();
+  const resumeId = searchParams.get("resume");
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Draft>({
     occasion: "birthday",
@@ -101,6 +119,61 @@ export default function CreatePage() {
   const [source, setSource] = useState<SourceAssetId | null>(null);
   const [funding, setFunding] = useState(false);
   const [escrowUrl, setEscrowUrl] = useState<string | null>(null);
+
+  // Resuming an unfunded draft (from My gifts "Resume"): reuse its id instead
+  // of creating a new gift, and jump straight to the Fund step.
+  const [resumeGiftId, setResumeGiftId] = useState<string | null>(null);
+  const [resumeClaimSlug, setResumeClaimSlug] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!resumeId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/gifts/status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: [resumeId] }),
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        const item = data?.items?.[0];
+        if (!res.ok || !item) {
+          setError("Could not load that draft.");
+          return;
+        }
+        if (item.status !== "draft") {
+          setError("This gift was already funded.");
+          return;
+        }
+        setDraft((d) => ({
+          ...d,
+          occasion: item.occasion as OccasionId,
+          customLabel: item.occasion === "custom" ? (item.occasion_label ?? "") : "",
+          cardImage: item.card_image || "",
+          recipientName: item.recipient_name || "",
+          amount:
+            item.amount_value != null
+              ? String(item.amount_value)
+              : String(item.amount_display ?? "").replace(/[^\d.]/g, ""),
+          message: item.message || "",
+          theme: item.card_theme as CardThemeId,
+          rule: item.rule_type as RuleTypeId,
+          unlockAt: item.unlock_at ? toDatetimeLocal(item.unlock_at) : "",
+        }));
+        setResumeGiftId(item.id);
+        setResumeClaimSlug(item.claim_slug);
+        setDir(1);
+        setStep(STEPS.length - 1);
+      } catch {
+        if (!cancelled) setError("Could not load that draft.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resumeId]);
 
   const amountFormatted = useMemo(
     () =>
@@ -171,7 +244,7 @@ export default function CreatePage() {
       setConnected(true);
       toast("Wallet connected");
     } catch (e) {
-      setError((e as Error).message ?? "Could not connect a wallet.");
+      setError(friendlyWalletError(e));
     } finally {
       setConnecting(false);
     }
@@ -189,43 +262,53 @@ export default function CreatePage() {
     setFunding(true);
     setError(null);
     try {
-      const createRes = await fetch("/api/gifts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          occasion: draft.occasion,
-          occasion_label:
-            draft.occasion === "custom" ? draft.customLabel.trim() : undefined,
-          card_image:
-            draft.occasion === "custom" && draft.cardImage
-              ? draft.cardImage
+      let giftId: string;
+      let claimSlugValue: string;
+      if (resumeGiftId && resumeClaimSlug) {
+        // Reuse the existing draft instead of creating a second gift.
+        giftId = resumeGiftId;
+        claimSlugValue = resumeClaimSlug;
+      } else {
+        const createRes = await fetch("/api/gifts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            occasion: draft.occasion,
+            occasion_label:
+              draft.occasion === "custom" ? draft.customLabel.trim() : undefined,
+            card_image:
+              draft.occasion === "custom" && draft.cardImage
+                ? draft.cardImage
+                : undefined,
+            amount_display: amountDisplay,
+            amount_value: Number(draft.amount) || undefined,
+            message: draft.message || undefined,
+            card_theme: draft.theme,
+            rule_type: draft.rule,
+            protection: draft.protection,
+            recipient_email:
+              draft.protection === "email"
+                ? draft.recipientEmail.trim()
+                : undefined,
+            pin: draft.protection === "pin" ? draft.pin.trim() : undefined,
+            unlock_at: draft.unlockAt
+              ? new Date(draft.unlockAt).toISOString()
               : undefined,
-          amount_display: amountDisplay,
-          amount_value: Number(draft.amount) || undefined,
-          message: draft.message || undefined,
-          card_theme: draft.theme,
-          rule_type: draft.rule,
-          protection: draft.protection,
-          recipient_email:
-            draft.protection === "email"
-              ? draft.recipientEmail.trim()
-              : undefined,
-          pin: draft.protection === "pin" ? draft.pin.trim() : undefined,
-          unlock_at: draft.unlockAt
-            ? new Date(draft.unlockAt).toISOString()
-            : undefined,
-          sender_id: getSenderId(),
-          sender_email: draft.senderEmail.trim() || undefined,
-          recipient_name: draft.recipientName.trim() || undefined,
-        }),
-      });
-      const created = await createRes.json();
-      if (!createRes.ok) {
-        setError(created?.error?.message ?? "Could not create the gift.");
-        return;
+            sender_id: getSenderId(),
+            sender_email: draft.senderEmail.trim() || undefined,
+            recipient_name: draft.recipientName.trim() || undefined,
+          }),
+        });
+        const created = await createRes.json();
+        if (!createRes.ok) {
+          setError(created?.error?.message ?? "Could not create the gift.");
+          return;
+        }
+        // Track locally so the sender's "My gifts" page can show it.
+        rememberGiftId(created.id);
+        giftId = created.id;
+        claimSlugValue = created.claim_slug;
       }
-      // Track locally so the sender's "My gifts" page can show it.
-      rememberGiftId(created.id);
 
       const asset = SOURCE_ASSETS.find((a) => a.id === source);
       const deadlineUnix =
@@ -265,7 +348,7 @@ export default function CreatePage() {
         return;
       }
 
-      const fundRes = await fetch(`/api/gifts/${created.id}/fund`, {
+      const fundRes = await fetch(`/api/gifts/${giftId}/fund`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -282,8 +365,8 @@ export default function CreatePage() {
 
       const base =
         typeof window !== "undefined" ? window.location.origin : "";
-      setClaimSlug(created.claim_slug);
-      setClaimUrl(`${base}/g/${created.claim_slug}`);
+      setClaimSlug(claimSlugValue);
+      setClaimUrl(`${base}/g/${claimSlugValue}`);
       setEscrowUrl(explorerAddressUrl(escrowAddress));
       toast("Gift funded 🎁");
 
@@ -297,7 +380,7 @@ export default function CreatePage() {
             deadlineUnix,
             SEPOLIA_RPC,
           );
-          storeRefundPermission(created.id, {
+          storeRefundPermission(giftId, {
             escrowAddress,
             sessionPrivateKey: permission.sessionPrivateKey,
             serializedAccount: permission.serializedAccount,
@@ -307,7 +390,7 @@ export default function CreatePage() {
         }
       }
     } catch (e) {
-      setError((e as Error).message ?? "Network hiccup. Please try again.");
+      setError(friendlyWalletError(e));
     } finally {
       setFunding(false);
     }

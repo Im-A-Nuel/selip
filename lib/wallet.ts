@@ -42,3 +42,21 @@ export async function signRootHash(
   const client = createWalletClient({ transport: custom(provider) });
   return client.signMessage({ account: address, message: { raw: rootHash } });
 }
+
+// Wallet/viem errors (MetaMask EIP-1193 errors, viem's BaseError) come as huge
+// multi-line dumps -- request args, docs links, SDK version -- that are noise
+// to a normal user. Collapse them into one short, human sentence. A rejected
+// signature/transaction (EIP-1193 code 4001) is not a failure, just a "no", so
+// it gets its own calmer wording.
+export function friendlyWalletError(e: unknown): string {
+  const err = e as any;
+  const text = String(err?.shortMessage ?? err?.message ?? err ?? "");
+  if (err?.code === 4001 || /user rejected/i.test(text)) {
+    return "You cancelled the request. Nothing was sent.";
+  }
+  if (typeof err?.shortMessage === "string" && err.shortMessage) {
+    return err.shortMessage;
+  }
+  const firstLine = text.split("\n")[0]?.trim();
+  return firstLine || "Something went wrong. Please try again.";
+}

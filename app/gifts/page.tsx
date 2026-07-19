@@ -10,6 +10,7 @@ import { useToast } from "@/components/Toast";
 import { getSenderId, getGiftIds, getRefundPermission } from "@/lib/myGifts";
 import { occasionById, GIFT_ESCROW_FACTORY } from "@/lib/constants";
 import { executeAutomatedRefund } from "@/lib/zerodev";
+import { friendlyWalletError } from "@/lib/wallet";
 
 const SEPOLIA_RPC =
   process.env.NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL ??
@@ -65,6 +66,7 @@ export default function MyGiftsPage() {
   const toast = useToast();
   const [items, setItems] = useState<Item[] | null>(null);
   const [refunding, setRefunding] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [qrSlug, setQrSlug] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "waiting" | "opened">("all");
   const [visible, setVisible] = useState(10);
@@ -136,10 +138,8 @@ export default function MyGiftsPage() {
             SEPOLIA_RPC,
           );
         } catch (chainError) {
-          toast(
-            (chainError as Error).message ??
-              "On-chain refund failed. It may not be past the deadline yet.",
-          );
+          console.warn("On-chain refund failed:", chainError);
+          toast(friendlyWalletError(chainError));
           setRefunding(null);
           return;
         }
@@ -165,6 +165,29 @@ export default function MyGiftsPage() {
       toast("Network hiccup.");
     } finally {
       setRefunding(null);
+    }
+  }
+
+  async function deleteDraft(id: string) {
+    if (!window.confirm("Delete this draft? This can't be undone.")) return;
+    setDeleting(id);
+    try {
+      const res = await fetch(`/api/gifts/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sender_id: getSenderId() }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast("Draft deleted");
+        await load();
+      } else {
+        toast(data?.error?.message ?? "Could not delete this draft.");
+      }
+    } catch {
+      toast("Network hiccup.");
+    } finally {
+      setDeleting(null);
     }
   }
 
@@ -299,18 +322,38 @@ export default function MyGiftsPage() {
                     )}
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1.5">
-                    <button
-                      onClick={() => copyLink(g.claim_slug)}
-                      className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-ink shadow-sm ring-1 ring-ink/5"
-                    >
-                      Copy link
-                    </button>
-                    <button
-                      onClick={() => setQrSlug(g.claim_slug)}
-                      className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-coral-600 shadow-sm ring-1 ring-ink/5"
-                    >
-                      QR
-                    </button>
+                    {g.status === "draft" ? (
+                      <>
+                        <Link
+                          href={`/create?resume=${g.id}`}
+                          className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-ink shadow-sm ring-1 ring-ink/5"
+                        >
+                          Resume
+                        </Link>
+                        <button
+                          disabled={deleting === g.id}
+                          onClick={() => deleteDraft(g.id)}
+                          className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-red-500 shadow-sm ring-1 ring-ink/5 disabled:opacity-40"
+                        >
+                          {deleting === g.id ? "Deleting…" : "Delete"}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => copyLink(g.claim_slug)}
+                          className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-ink shadow-sm ring-1 ring-ink/5"
+                        >
+                          Copy link
+                        </button>
+                        <button
+                          onClick={() => setQrSlug(g.claim_slug)}
+                          className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-coral-600 shadow-sm ring-1 ring-ink/5"
+                        >
+                          QR
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 

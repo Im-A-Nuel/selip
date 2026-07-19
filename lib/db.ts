@@ -11,6 +11,7 @@ export interface GiftRepo {
   getById(id: string): Promise<Gift | null>;
   getBySlug(slug: string): Promise<Gift | null>;
   update(id: string, patch: Partial<Gift>): Promise<Gift | null>;
+  delete(id: string): Promise<void>;
   listByIds(ids: string[]): Promise<Gift[]>;
   listBySenderId(senderId: string): Promise<Gift[]>;
 }
@@ -96,6 +97,12 @@ class MemoryRepo implements GiftRepo {
     const next = { ...existing, ...patch };
     this.store.set(id, next);
     return next;
+  }
+
+  async delete(id: string): Promise<void> {
+    const existing = this.store.get(id);
+    if (existing) this.slugIndex.delete(existing.claim_slug);
+    this.store.delete(id);
   }
 
   async listByIds(ids: string[]): Promise<Gift[]> {
@@ -207,6 +214,12 @@ class SupabaseRepo implements GiftRepo {
       .maybeSingle();
     if (error) throw new Error(error.message);
     return (data as Gift) ?? null;
+  }
+
+  async delete(id: string): Promise<void> {
+    const db = await this.client();
+    const { error } = await db.from(TABLE).delete().eq("id", id);
+    if (error) throw new Error(error.message);
   }
 
   async listByIds(ids: string[]): Promise<Gift[]> {

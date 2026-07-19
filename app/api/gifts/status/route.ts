@@ -46,6 +46,8 @@ export async function POST(req: NextRequest) {
       occasion_label: g.occasion_label ?? "",
       recipient_name: g.recipient_name ?? "",
       amount_display: g.amount_display,
+      amount_value: g.amount_value ?? null,
+      message: g.message ?? "",
       card_theme: g.card_theme,
       card_image: g.card_image ?? "",
       status: g.status,
