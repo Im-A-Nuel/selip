@@ -85,6 +85,7 @@ export async function createRefundPermission(
 ): Promise<RefundPermission> {
   const [
     { createPublicClient, http },
+    { arbitrumSepolia },
     { createKernelAccount },
     { KERNEL_V3_3, getEntryPoint },
     { generatePrivateKey, privateKeyToAccount },
@@ -93,6 +94,7 @@ export async function createRefundPermission(
     { toCallPolicy, toTimestampPolicy, CallPolicyVersion },
   ] = await Promise.all([
     import("viem"),
+    import("viem/chains"),
     import("@zerodev/sdk"),
     import("@zerodev/sdk/constants"),
     import("viem/accounts"),
@@ -101,7 +103,10 @@ export async function createRefundPermission(
     import("@zerodev/permissions/policies"),
   ]);
 
-  const publicClient = createPublicClient({ transport: http(rpcUrl) });
+  // `chain` is required here -- viem's account-abstraction actions (getNonce,
+  // prepareUserOperation, ...) read client.chain.id internally, and throw
+  // "Cannot read properties of undefined (reading 'id')" without it.
+  const publicClient = createPublicClient({ chain: arbitrumSepolia, transport: http(rpcUrl) });
   const entryPoint = getEntryPoint("0.7");
 
   // The sender's own connected wallet acts as the EIP-7702 signer (owner /
@@ -173,6 +178,7 @@ export async function claimGiftGasless(
 ): Promise<string> {
   const [
     { createPublicClient, http, encodeFunctionData },
+    { arbitrumSepolia },
     { createKernelAccount, createKernelAccountClient, createZeroDevPaymasterClient },
     { getEntryPoint, KERNEL_V3_3 },
     { toPermissionValidator },
@@ -180,6 +186,7 @@ export async function claimGiftGasless(
     { toSudoPolicy },
   ] = await Promise.all([
     import("viem"),
+    import("viem/chains"),
     import("@zerodev/sdk"),
     import("@zerodev/sdk/constants"),
     import("@zerodev/permissions"),
@@ -187,7 +194,7 @@ export async function claimGiftGasless(
     import("@zerodev/permissions/policies"),
   ]);
 
-  const publicClient = createPublicClient({ transport: http(rpcUrl) });
+  const publicClient = createPublicClient({ chain: arbitrumSepolia, transport: http(rpcUrl) });
   const entryPoint = getEntryPoint("0.7");
 
   // Full-authority validator owned by the recipient's signer. Sudo policy is
@@ -212,6 +219,7 @@ export async function claimGiftGasless(
   });
   const kernelClient = createKernelAccountClient({
     account: kernelAccount,
+    chain: arbitrumSepolia,
     bundlerTransport: http(bundlerUrl),
     paymaster: paymasterClient,
     client: publicClient,
@@ -245,17 +253,19 @@ export async function executeAutomatedRefund(
 ): Promise<string> {
   const [
     { createPublicClient, http, encodeFunctionData },
+    { arbitrumSepolia },
     { createKernelAccountClient, createZeroDevPaymasterClient },
     { getEntryPoint, KERNEL_V3_3 },
     { deserializePermissionAccount },
   ] = await Promise.all([
     import("viem"),
+    import("viem/chains"),
     import("@zerodev/sdk"),
     import("@zerodev/sdk/constants"),
     import("@zerodev/permissions"),
   ]);
 
-  const publicClient = createPublicClient({ transport: http(rpcUrl) });
+  const publicClient = createPublicClient({ chain: arbitrumSepolia, transport: http(rpcUrl) });
   const entryPoint = getEntryPoint("0.7");
 
   const sessionKeyAccount = await deserializePermissionAccount(
@@ -271,6 +281,7 @@ export async function executeAutomatedRefund(
   });
   const kernelClient = createKernelAccountClient({
     account: sessionKeyAccount,
+    chain: arbitrumSepolia,
     bundlerTransport: http(bundlerUrl),
     paymaster: paymasterClient,
     client: publicClient,
