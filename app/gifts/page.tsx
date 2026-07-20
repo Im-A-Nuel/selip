@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { PillButton } from "@/components/ui";
 import { QrModal } from "@/components/QrModal";
+import { ConfirmModal } from "@/components/ConfirmModal";
 import { BackButton } from "@/components/BackButton";
 import { useToast } from "@/components/Toast";
 import { getSenderId, getGiftIds, getRefundPermission } from "@/lib/myGifts";
@@ -67,6 +68,7 @@ export default function MyGiftsPage() {
   const [items, setItems] = useState<Item[] | null>(null);
   const [refunding, setRefunding] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [qrSlug, setQrSlug] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "waiting" | "opened">("all");
   const [visible, setVisible] = useState(10);
@@ -169,7 +171,7 @@ export default function MyGiftsPage() {
   }
 
   async function deleteDraft(id: string) {
-    if (!window.confirm("Delete this draft? This can't be undone.")) return;
+    setConfirmDeleteId(null);
     setDeleting(id);
     try {
       const res = await fetch(`/api/gifts/${id}`, {
@@ -332,7 +334,7 @@ export default function MyGiftsPage() {
                         </Link>
                         <button
                           disabled={deleting === g.id}
-                          onClick={() => deleteDraft(g.id)}
+                          onClick={() => setConfirmDeleteId(g.id)}
                           className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-red-500 shadow-sm ring-1 ring-ink/5 disabled:opacity-40"
                         >
                           {deleting === g.id ? "Deleting…" : "Delete"}
@@ -401,6 +403,17 @@ export default function MyGiftsPage() {
         <QrModal
           value={`${window.location.origin}/g/${qrSlug}`}
           onClose={() => setQrSlug(null)}
+        />
+      )}
+
+      {confirmDeleteId && (
+        <ConfirmModal
+          title="Delete this draft?"
+          body="This can't be undone. It was never funded, so no money is involved."
+          confirmLabel="Delete"
+          busy={deleting === confirmDeleteId}
+          onConfirm={() => deleteDraft(confirmDeleteId)}
+          onClose={() => setConfirmDeleteId(null)}
         />
       )}
     </main>
